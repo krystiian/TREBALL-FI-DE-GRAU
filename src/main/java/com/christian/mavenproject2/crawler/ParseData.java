@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
- package com.christian.mavenproject2.crawler;
+package com.christian.mavenproject2.crawler;
 
 import java.util.Set;
 
 public interface ParseData {
 
-    Set<WebURL> getOutgoingUrls();
+	Set<WebURL> getOutgoingUrls();
 
-    void setOutgoingUrls(Set<WebURL> outgoingUrls);
+	void setOutgoingUrls(Set<WebURL> outgoingUrls);
 
-    @Override
-    String toString();
+	@Override
+	String toString();
 }

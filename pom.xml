@@ -320,6 +320,20 @@
             <version>3.16</version>
         </dependency>
         
+        
+        <dependency>
+		    <groupId>com.maxmind.geoip</groupId>
+		    <artifactId>geoip-api</artifactId>
+		    <version>1.2.14</version>
+		</dependency>
+
+	    <!-- https://mvnrepository.com/artifact/dnsjava/dnsjava -->
+		<dependency>
+		    <groupId>dnsjava</groupId>
+		    <artifactId>dnsjava</artifactId>
+		    <version>2.1.8</version>
+		</dependency>
+
         <dependency>
 	  		<groupId>org.apache.httpcomponents</groupId>
 	  		<artifactId>httpasyncclient</artifactId>

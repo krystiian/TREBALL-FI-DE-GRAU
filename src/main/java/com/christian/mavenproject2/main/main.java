@@ -20,8 +20,8 @@ package com.christian.mavenproject2.main;
  * @author chris
  */
 public class main {
-    public static void main(String[] args) throws Exception {
-        mainMenu menu = new mainMenu();
-        menu.setVisible(true);
-    }
+	public static void main(String[] args) throws Exception {
+		mainMenu menu = new mainMenu();
+		menu.setVisible(true);
+	}
 }

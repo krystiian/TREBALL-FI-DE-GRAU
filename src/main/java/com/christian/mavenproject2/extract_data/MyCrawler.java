@@ -1,7 +1,13 @@
 package com.christian.mavenproject2.extract_data;
 
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.regex.Pattern;
 
+import org.omg.CosNaming.NamingContextExtPackage.AddressHelper;
+
+import com.christian.mavenproject2.analisy_algorithms.CreateMaps;
 import com.christian.mavenproject2.analisy_algorithms.MyAlgorithms;
 import com.christian.mavenproject2.crawler.HtmlParseData;
 import com.christian.mavenproject2.crawler.Page;
@@ -138,6 +144,7 @@ public class MyCrawler extends WebCrawler {
 	}
 
 	public String tiempoEjecucion(Page p, mainMenu menu) {
+		CreateMaps cr = new CreateMaps();
 		String s = "";
 		String url = p.getWebURL().getURL().toLowerCase();
 		String geoURL = p.getWebURL().getSubDomain()+"."+p.getWebURL().getDomain();
@@ -160,9 +167,11 @@ public class MyCrawler extends WebCrawler {
 			String[] geo = getGeolocation(geoURL);
 			if(geo[2] != null) geolocation = geo[2] + "," + geo[0];
 			else geolocation = geo[0];
+			menu.heatMap += cr.addHeatMApValue(geo[8], geo[9]);
+			menu.circleMap += cr.addCircleMApValue(geo[0], getIP(geoURL), geo[8], geo[9], menu.enlacesAnalizados, geoURL, url);
 			s += "GEOLOCATION : " + geolocation +"\n";
 		}
-		
+		// CountryName, CountryCode, City , PostalCode, Region, AreaCode, dmaCode, MetroCode, Latitude, Longitude
 		menu.data.put(menu.enlacesAnalizados + 1 + "", new Object[] { url, idioma, email, geolocation });
 		s += "\n";
 		return s;
@@ -188,5 +197,17 @@ public class MyCrawler extends WebCrawler {
 	// CountryName, CountryCode, City , PostalCode, Region, AreaCode, dmaCode, MetroCode, Latitude, Longitude
 	public String[] getGeolocation(String url) {
 		return GeoIPv4.getLocation(url).getALL();
+	}
+	
+	public String getIP(String url)
+	{
+		InetAddress ip = null;
+		try {
+			ip = java.net.InetAddress.getByName(url);
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ip.getHostAddress();
 	}
 }

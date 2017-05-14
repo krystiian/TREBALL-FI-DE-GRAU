@@ -52,6 +52,7 @@ import javax.swing.border.MatteBorder;
 import javax.swing.border.SoftBevelBorder;
 import javax.swing.text.DefaultCaret;
 
+import com.christian.mavenproject2.analisy_algorithms.CreateMaps;
 import com.christian.mavenproject2.analisy_algorithms.MyAlgorithms;
 import com.christian.mavenproject2.analisy_algorithms.MyExcel;
 import com.christian.mavenproject2.analisy_algorithms.TimerTaskCalls;
@@ -95,6 +96,8 @@ public class mainMenu extends javax.swing.JFrame {
 	public String[] linkContainsValue;
 	public String[] linkNoContainsValue;
 	public String[] contains;
+	public String heatMap = "";
+	public String circleMap = "";
 	public String geoLanguage;
 	public String priority;
 	public String regex;
@@ -1039,11 +1042,14 @@ public class mainMenu extends javax.swing.JFrame {
 							try {
 								Thread.sleep(10000);
 								MyExcel excel = new MyExcel();
+								CreateMaps cm = new CreateMaps();
 								excel.importToExcel(menu.store + "_success.xlsx", data);
 								if (menu.isBroken) {
 									MyExcel excelErrors = new MyExcel();
 									excelErrors.importToExcel(menu.store + "_error.xlsx", dataBroken);
 								}
+								cm.createHeatMap(menu.heatMap, menu.store);
+								cm.createCircleMap(menu.circleMap, menu.store);
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();

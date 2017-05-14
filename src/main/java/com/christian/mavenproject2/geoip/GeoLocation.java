@@ -1,6 +1,9 @@
 package com.christian.mavenproject2.geoip;
 
 import com.maxmind.geoip.Location;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class GeoLocation {
 
@@ -90,5 +93,22 @@ public class GeoLocation {
 				+ ", areaCode=" + areaCode + ", dmaCode=" + dmaCode + ", metroCode=" + metroCode + ", latitude="
 				+ latitude + ", longitude=" + longitude + '}';
 	}
-
+	
+	public long getIP(String url)
+	{
+		long ipAddress = (Long) null;
+		try {
+			ipAddress = new BigInteger(InetAddress.getByName(url).getAddress()).longValue();
+			return ipAddress;
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ipAddress;
+	}
+	
+	public String[] getGeolocation(String url) {
+		return GeoIPv4.getLocation(url).getALL();
+	}
+	
 }

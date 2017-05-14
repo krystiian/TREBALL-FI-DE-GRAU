@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.apache.tika.language.LanguageIdentifier;
 import org.apache.tika.metadata.DublinCore;
 import org.apache.tika.metadata.Metadata;

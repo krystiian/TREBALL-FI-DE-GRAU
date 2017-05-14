@@ -17,11 +17,13 @@
 
 package com.christian.mavenproject2.crawler;
 
-import com.sleepycat.je.DatabaseException;
-import com.sleepycat.je.Environment;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.Environment;
 
 /**
  * @author Yasser Ganjisaffar

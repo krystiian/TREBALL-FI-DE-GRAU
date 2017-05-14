@@ -1,7 +1,9 @@
 package com.christian.mavenproject2.crawler;
 
 import java.io.IOException;
+
 import javax.net.ssl.SSLProtocolException;
+
 import org.apache.http.HttpClientConnection;
 import org.apache.http.config.Registry;
 import org.apache.http.conn.routing.HttpRoute;

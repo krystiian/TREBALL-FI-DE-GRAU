@@ -1,6 +1,7 @@
 package com.christian.mavenproject2.crawler;
 
 import java.net.MalformedURLException;
+
 import javax.swing.text.html.FormSubmitEvent.MethodType;
 
 /**

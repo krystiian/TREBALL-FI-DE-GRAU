@@ -17,14 +17,16 @@
 
 package com.christian.mavenproject2.crawler;
 
-import com.christian.mavenproject2.main.mainMenu;
-import com.sleepycat.je.Environment;
-import com.sleepycat.je.EnvironmentConfig;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.christian.mavenproject2.main.mainMenu;
+import com.sleepycat.je.Environment;
+import com.sleepycat.je.EnvironmentConfig;
 
 /**
  * The controller that manages a crawling session. This class creates the

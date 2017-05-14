@@ -1,37 +1,14 @@
 package com.christian.mavenproject2.extract_data;
 
-import com.christian.mavenproject2.analisy_algorithms.HttpURLConnectionCall;
+import java.util.regex.Pattern;
+
 import com.christian.mavenproject2.analisy_algorithms.MyAlgorithms;
-import com.christian.mavenproject2.analisy_algorithms.TimerTaskCalls;
-import com.christian.mavenproject2.crawler.CrawlController;
 import com.christian.mavenproject2.crawler.HtmlParseData;
 import com.christian.mavenproject2.crawler.Page;
 import com.christian.mavenproject2.crawler.WebCrawler;
 import com.christian.mavenproject2.crawler.WebURL;
 import com.christian.mavenproject2.geoip.GeoIPv4;
 import com.christian.mavenproject2.main.mainMenu;
-import com.sleepycat.je.rep.utilint.ServiceDispatcher.Response;
-
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.swing.text.DefaultCaret;
-
-import org.apache.commons.codec.binary.Base64;
-import org.json.JSONObject;
-import org.xbill.DNS.Address;
-import org.xbill.DNS.DClass;
-import org.xbill.DNS.GPOSRecord;
-import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Name;
-import org.xbill.DNS.Record;
-import org.xbill.DNS.SimpleResolver;
-import org.xbill.DNS.TextParseException;
-import org.xbill.DNS.Type;
 
 public class MyCrawler extends WebCrawler {
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v|pdf"
@@ -63,11 +40,11 @@ public class MyCrawler extends WebCrawler {
 		url.setPriority((byte) +url.getDepth());
 		if (menu.dataPriority < 0 && algorithms.pageContainsContent(referringPage, menu.contains, menu.isAll,
 				menu.isAtLeast, menu.isNone, menu)) {
-			url.setPriority(((byte) ((int) url.getPriority() - menu.dataPriority + url.getDepth())));
+			url.setPriority(((byte) (url.getPriority() - menu.dataPriority + url.getDepth())));
 
 		}
 		if (menu.linkPriority < 0 && isUnderCondition(menu, url)) {
-			url.setPriority(((byte) ((int) url.getPriority() - menu.linkPriority + url.getDepth())));
+			url.setPriority(((byte) (url.getPriority() - menu.linkPriority + url.getDepth())));
 		}
 		return true;
 	}
@@ -79,17 +56,15 @@ public class MyCrawler extends WebCrawler {
 	@Override
 	public void visit(Page page) {
 		WebURL webURL = page.getWebURL();
-		String url = webURL.getURL();
+		String geoURL = webURL.getSubDomain()+"."+webURL.getDomain();
 		mainMenu menu = this.getMyController().menu;
-		menu.writeConsole(getGeolocation(webURL.getSubDomain() + "." + webURL.getDomain())[0] + "\n");
 		menu.enlacesProcesados += 1;
 		if (page.getParseData() instanceof HtmlParseData && isUnderCondition(menu, page.getWebURL())
-				&& algorithms.pageContainsContent(page, menu.contains, menu.isAll, menu.isAtLeast, menu.isNone, menu)) {
+				&& algorithms.pageContainsContent(page, menu.contains, menu.isAll, menu.isAtLeast, menu.isNone, menu) && isGeolocation(geoURL,menu,menu.geoBoundingBox[0],menu.geoBoundingBox[1],menu.geoBoundingBox[2],menu.geoBoundingBox[3],page)) {
 			menu.enlacesValidos += 1;
 			menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesProcesados + " PROCESADOS  |  "
 					+ menu.enlacesValidos + " VALIDOS  |  " + menu.enlacesAnalizados + " ANALIZADOS  |  "
 					+ menu.enlacesErroneos + " ROTOS  |  " + menu.emailsFetched + " EMAILS");
-			// menu.writeConsole(page.getWebURL().getDepth()+"\n");
 			menu.writeConsole(tiempoEjecucion(page, menu));
 			menu.enlacesAnalizados += 1;
 			menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesProcesados + " PROCESADOS  |  "
@@ -164,11 +139,8 @@ public class MyCrawler extends WebCrawler {
 
 	public String tiempoEjecucion(Page p, mainMenu menu) {
 		String s = "";
-		// COMPROBAR TODO EL TEMA DE GEOLOCATION
-		menu.writeConsole(p.getWebURL().getURL());
-		// if(!isGeolocation(p.getWebURL().getSubDomain()+"."+p.getWebURL().getDomain(),menu,-10.37109375,35.567980458012144,2.4609375,44.33956524809711))
-		// return "MECK";
 		String url = p.getWebURL().getURL().toLowerCase();
+		String geoURL = p.getWebURL().getSubDomain()+"."+p.getWebURL().getDomain();
 		s = "URL: " + url + "\n";
 		String idioma = "";
 		String email = "";
@@ -181,24 +153,39 @@ public class MyCrawler extends WebCrawler {
 		}
 		if (menu.isEmails) {
 			email = algorithms.getAllEmails(algorithms.detectEmails(p), menu);
-			if (email != null)
+			if (!email.isEmpty())
 				s += "EMAIL: " + email + "\n";
 		}
-		// if(menu.isBroken) {status = ""+ p.getStatusCode(); s+= "STATUS: " +
-		// status + "\n";}
-		// if(menu.isGeolocation)isGeolocation(p.getWebURL().getSubDomain()+p.getWebURL().getDomain(),menu,2.06817626953125,41.28606238749825,2.296142578125,41.492120839687814);
+		if(menu.fetchGeolocation) {
+			String[] geo = getGeolocation(geoURL);
+			if(geo[2] != null) geolocation = geo[2] + "," + geo[0];
+			else geolocation = geo[0];
+			s += "GEOLOCATION : " + geolocation +"\n";
+		}
+		
 		menu.data.put(menu.enlacesAnalizados + 1 + "", new Object[] { url, idioma, email, geolocation });
 		s += "\n";
 		return s;
 	}
 
-	/*
-	 * public boolean isGeolocation(String url, mainMenu menu, double _lngSW,
-	 * double _latSW, double _lngNE, double _latNE) {
-	 * 
-	 * }
-	 */
+	 public boolean isGeolocation(String url, mainMenu menu, float _lngSW, float _latSW, float _lngNE, float _latNE, Page page)
+	 {
+		 if(menu.isGeoLanguage)
+		 {
+			 MyAlgorithms myAlg = new MyAlgorithms();
+			 if(!myAlg.detectLanguage(page).equals(menu.geoLanguage)) return false;
+		 }
+		 if(menu.isGeoBoundingBox)
+		 {
+			 String[] ipGeo = getGeolocation(url);
+			float lng = (float)(Float.parseFloat(ipGeo[9]));
+			float lat = (float)(Float.parseFloat(ipGeo[8]));
+			if(!((lng >= _lngSW) && (lng <= _lngNE) && (lat >= _latSW) && (lat <= _latNE))) return false;
+		 }
+		 return true;
+	 }
 
+	// CountryName, CountryCode, City , PostalCode, Region, AreaCode, dmaCode, MetroCode, Latitude, Longitude
 	public String[] getGeolocation(String url) {
 		return GeoIPv4.getLocation(url).getALL();
 	}

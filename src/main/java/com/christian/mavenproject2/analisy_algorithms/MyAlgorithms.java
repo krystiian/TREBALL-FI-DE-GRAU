@@ -15,11 +15,6 @@
  */
 package com.christian.mavenproject2.analisy_algorithms;
 
-import com.christian.mavenproject2.crawler.HtmlParseData;
-import com.christian.mavenproject2.crawler.Page;
-import com.christian.mavenproject2.main.mainMenu;
-
-import java.awt.Menu;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -28,9 +23,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.tika.language.LanguageIdentifier;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+
+import com.christian.mavenproject2.crawler.HtmlParseData;
+import com.christian.mavenproject2.crawler.Page;
+import com.christian.mavenproject2.main.mainMenu;
 
 /**
  *
@@ -118,8 +118,6 @@ public class MyAlgorithms {
 	}
 
 	public boolean pageContainsContent(Page p, String[] s, boolean all, boolean atLeast, boolean none, mainMenu menu) {
-		if (!(p.getParseData() instanceof HtmlParseData))
-			return false;
 		if (!(all || atLeast || none))
 			return true;
 		HtmlParseData htmlp = (HtmlParseData) p.getParseData();

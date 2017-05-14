@@ -17,6 +17,9 @@
 
 package com.christian.mavenproject2.crawler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
@@ -24,8 +27,6 @@ import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Transaction;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Yasser Ganjisaffar

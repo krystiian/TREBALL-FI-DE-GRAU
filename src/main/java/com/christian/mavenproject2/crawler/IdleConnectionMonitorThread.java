@@ -18,6 +18,7 @@
 package com.christian.mavenproject2.crawler;
 
 import java.util.concurrent.TimeUnit;
+
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 public class IdleConnectionMonitorThread extends Thread {

@@ -1,9 +1,6 @@
 package com.christian.mavenproject2.analisy_algorithms;
 
-import java.util.Timer;
 import java.util.TimerTask;
-
-import com.christian.mavenproject2.main.mainMenu;
 
 public class TimerTaskCalls extends TimerTask {
 

@@ -17,13 +17,14 @@
 
 package com.christian.mavenproject2.crawler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sleepycat.je.Cursor;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class maintains the list of pages which are assigned to crawlers but are

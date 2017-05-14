@@ -15,7 +15,43 @@
  */
 package com.christian.mavenproject2.main;
 
-import com.christian.mavenproject2.analisy_algorithms.HttpURLConnectionCall;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Desktop;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.SwingConstants;
+import javax.swing.ToolTipManager;
+import javax.swing.UIManager;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.border.SoftBevelBorder;
+import javax.swing.text.DefaultCaret;
+
 import com.christian.mavenproject2.analisy_algorithms.MyAlgorithms;
 import com.christian.mavenproject2.analisy_algorithms.MyExcel;
 import com.christian.mavenproject2.analisy_algorithms.TimerTaskCalls;
@@ -25,52 +61,6 @@ import com.christian.mavenproject2.crawler.PageFetcher;
 import com.christian.mavenproject2.crawler.RobotstxtConfig;
 import com.christian.mavenproject2.crawler.RobotstxtServer;
 import com.christian.mavenproject2.extract_data.MyCrawler;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import javax.swing.ToolTipManager;
-import javax.swing.text.DefaultCaret;
-
-import org.json.JSONObject;
-import javax.swing.JTabbedPane;
-import java.awt.Dimension;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.GroupLayout;
-import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.JLayeredPane;
-import javax.swing.SwingConstants;
-import javax.swing.border.TitledBorder;
-import javax.swing.UIManager;
-import java.awt.Color;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
-import javax.swing.JList;
-import javax.swing.JLabel;
-import java.awt.Component;
-import java.awt.Desktop;
-
-import javax.swing.border.MatteBorder;
-import java.awt.Font;
-import javax.swing.JSeparator;
-import javax.swing.border.LineBorder;
-import javax.swing.AbstractListModel;
-import javax.swing.JComboBox;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.border.BevelBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.SoftBevelBorder;
 
 /**
  *
@@ -91,7 +81,7 @@ public class mainMenu extends javax.swing.JFrame {
 	public int crawlers = 5;
 	public int profundidad = -1;
 	public int tiempo = 50;
-	public Float[] geoBoundingBox;
+	public float[] geoBoundingBox = {0,0,0,0};
 
 	public TimerTaskCalls periodFunction = new TimerTaskCalls();
 	public static Pattern filenameRegex = Pattern.compile("[_a-zA-Z0-9\\-\\.]+");
@@ -128,7 +118,8 @@ public class mainMenu extends javax.swing.JFrame {
 	public boolean isPenalyze = false;
 	public boolean isGeoLanguage = false;
 	public boolean isGeoBoundingBox = false;
-
+	public boolean fetchGeolocation = false;
+	
 	CrawlController controller;
 
 	/**
@@ -139,7 +130,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 	public mainMenu() throws URISyntaxException {
 		initComponents();
-		menu.data.put("0", new Object[] { "URL", "LANGUAGE", "EMAILS" });
+		menu.data.put("0", new Object[] { "URL", "LANGUAGE", "EMAILS", "GEOLOCATION"});
 		menu.dataBroken.put("0", new Object[] { "STATUS", "URL", "LINK" });
 		menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesProcesados + " PROCESADOS  |  "
 				+ menu.enlacesValidos + " VALIDOS  |  " + menu.enlacesAnalizados + " ANALIZADOS  |  "
@@ -177,6 +168,7 @@ public class mainMenu extends javax.swing.JFrame {
 		jTextArea2.setForeground(new java.awt.Color(51, 255, 51));
 		jTextArea2.setRows(5);
 		jTextArea2.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
 			public void mouseClicked(java.awt.event.MouseEvent evt) {
 				jTextArea2MouseClicked(evt);
 			}
@@ -186,8 +178,9 @@ public class mainMenu extends javax.swing.JFrame {
 		jTextField10.setBackground(new java.awt.Color(0, 0, 0));
 		jTextField10.setFont(new java.awt.Font("Consolas", 1, 11)); // NOI18N
 		jTextField10.setForeground(new java.awt.Color(51, 255, 51));
-		jTextField10.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+		jTextField10.setHorizontalAlignment(SwingConstants.CENTER);
 		jTextField10.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jTextField10ActionPerformed(evt);
 			}
@@ -205,6 +198,7 @@ public class mainMenu extends javax.swing.JFrame {
 		jToggleButton1.setToolTipText(
 				"<html>\n\nSTART: Inicia el Crawling <br><br>\n\nCLOSE: Termina la ejecuci�n <br><br>\n\n</html>"); // NOI18N
 		jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jToggleButton1ActionPerformed(evt);
 			}
@@ -223,6 +217,7 @@ public class mainMenu extends javax.swing.JFrame {
 		jTextField2.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
 
 		jTextField2.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jTextField2ActionPerformed(evt);
 			}
@@ -237,6 +232,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 		jRadioButton9.setText("All");
 		jRadioButton9.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jRadioButton9ActionPerformed(evt);
 			}
@@ -260,6 +256,7 @@ public class mainMenu extends javax.swing.JFrame {
 				"<html>\r\n\r\nLos resultados extraidos se guardarán en un excel,<br>bajo el nombre {filename}_success.xlsx<br><br>\r\n\r\n<i> Si la opción Broken Links está activa, ser generara<br>un fichero {filename}_errores</i>\r\n\r\n</html>"); // NOI18N
 		jRadioButton11.setSelected(true);
 		jRadioButton11.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jRadioButton11ActionPerformed(evt);
 			}
@@ -276,6 +273,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 		jRadioButton10.setText("Broken Links");
 		jRadioButton10.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jRadioButton10ActionPerformed(evt);
 			}
@@ -353,9 +351,10 @@ public class mainMenu extends javax.swing.JFrame {
 		jTextField5.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		jTextField5.setAlignmentY(Component.TOP_ALIGNMENT);
 
-		jTextField5.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+		jTextField5.setHorizontalAlignment(SwingConstants.CENTER);
 		jTextField5.setText("50");
 		jTextField5.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jTextField5ActionPerformed(evt);
 			}
@@ -398,6 +397,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 		jRadioButton8.setText("At least one");
 		jRadioButton8.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jRadioButton8ActionPerformed(evt);
 			}
@@ -412,6 +412,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 		jRadioButton3.setText("None");
 		jRadioButton3.addActionListener(new java.awt.event.ActionListener() {
+			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				jRadioButton3ActionPerformed(evt);
 			}
@@ -446,7 +447,7 @@ public class mainMenu extends javax.swing.JFrame {
 		jRadioButton7.setHorizontalAlignment(SwingConstants.LEFT);
 
 		jRadioButton2 = new JRadioButton();
-		jRadioButton2.setBorder(new MatteBorder(1, 1, 1, 1, (Color) new Color(0, 0, 0)));
+		jRadioButton2.setBorder(new MatteBorder(1, 1, 1, 1, new Color(0, 0, 0)));
 		jRadioButton2.setBackground(new Color(57, 83, 109));
 		jRadioButton2.setFont(new Font("Dialog", Font.BOLD, 12));
 		jRadioButton2.setForeground(new Color(240, 255, 255));
@@ -487,6 +488,7 @@ public class mainMenu extends javax.swing.JFrame {
 		radioButton.setForeground(new Color(240, 255, 255));
 
 		radioButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 			}
 		});
@@ -500,6 +502,7 @@ public class mainMenu extends javax.swing.JFrame {
 		btnDisplayMap.setForeground(new Color(57, 83, 109));
 		btnDisplayMap.addActionListener(new OpenUrlAction());
 		btnDisplayMap.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 			}
 		});
@@ -1028,6 +1031,7 @@ public class mainMenu extends javax.swing.JFrame {
 				periodFunction = new TimerTaskCalls();
 				timer.scheduleAtFixedRate(periodFunction, 0, 5000);
 				Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+					@Override
 					public void run() {
 						controller.shutdown();
 						timer.cancel();
@@ -1208,15 +1212,17 @@ public class mainMenu extends javax.swing.JFrame {
 		this.isGeoBoundingBox = n;
 	}
 
-	public void setLGeoLanguante(String n) {
+	public void setIsFetchGeolocation(boolean n) {
+		this.fetchGeolocation = n;
+	}
+	
+	public void setGeoLanguante(String n) {
 		this.geoLanguage = n;
 	}
 
-	public void setLGeoBoundingBox(float lngSW, float latSW, float lngNE, float latNE) {
-		this.geoBoundingBox[0] = lngSW;
-		this.geoBoundingBox[1] = latSW;
-		this.geoBoundingBox[2] = lngNE;
-		this.geoBoundingBox[3] = latNE;
+	public void setGeoBoundingBox(float lngSW, float latSW, float lngNE, float latNE) {
+		float[] bb = {lngSW,latSW,lngNE,latNE};
+		this.geoBoundingBox = bb;
 	}
 
 	// GET CRAWLING PARAMETERS FROM MENU
@@ -1343,6 +1349,10 @@ public class mainMenu extends javax.swing.JFrame {
 	public Boolean getGeoIsBoundingBox() {
 		return this.radioButton.isSelected();
 	}
+	
+	public Boolean getIsFetchGeolocation() {
+		return this.rdbtnGeolocation.isSelected();
+	}
 
 	public void writeConsole(String s) {
 		jTextArea2.append(s);
@@ -1353,7 +1363,10 @@ public class mainMenu extends javax.swing.JFrame {
 	public boolean validateParams() {
 		boolean urlActivada = false;
 		boolean dataActivada = false;
-
+		float lngSW = 0;
+		float latSW = 0;
+		float lngNE = 0;
+		float latNE = 0;
 		jTextArea2.setText("\n\t*********\n\t* ERROR *\n\t*********\n\n");
 		if (getSemilla().replaceAll(" ", "").length() == 0) {
 			jTabbedPane1.setSelectedIndex(1);
@@ -1589,12 +1602,59 @@ public class mainMenu extends javax.swing.JFrame {
 				}
 			}
 		}
+		
+		
+		if(getGeoIsBoundingBox() && getBoundingBoxArea().length() > 0)
+		{
+			String[] s = getBoundingBoxArea().replaceAll("\\s+"," ").split(",");
+			try {
+				lngSW = (float)(Float.parseFloat(s[0]));
+				latSW = (float)(Float.parseFloat(s[1]));
+				lngNE = (float)(Float.parseFloat(s[2]));
+				latNE = (float)(Float.parseFloat(s[3]));
+				if((lngSW > lngNE) || (latSW > latNE))
+				{
+					jTabbedPane1.setSelectedIndex(1);
+					jTextArea2.append("GEOLOCATION -> BOUDING BOX AREA \n\nLos valores no cumples las condiciones de Bounding Box.");
+					return false;	
+				}
+				else {
+					setGeoBoundingBox((float)lngSW,(float)latSW,(float)lngNE,(float)latNE);
+					setGeoIsBoundingBox(true);
+				}
+			} catch (NumberFormatException e) {
+				// donothing
+				jTabbedPane1.setSelectedIndex(1);
+				jTextArea2.append("GEOLOCATION -> BOUDING BOX AREA \n\nEl formato introducido no es el correcto.");
+				return false;
+			}	
+		}
+		
+		else if(getGeoIsBoundingBox() && getBoundingBoxArea().length() > 0 && getBoundingBoxArea().replaceAll("\\s+"," ").split(",").length != 4) {
+			jTabbedPane1.setSelectedIndex(1);
+			jTextArea2.append(
+					"GEOLOCATION -> BOUNDING BOX AREA \n\nEl formato introducido, no es correcto. Copia y pega los valores obtenidos en el enlace.");
+			return false;
+		}
+		
+		else if(getGeoIsBoundingBox() && getBoundingBoxArea().replaceAll("\\s+"," ").isEmpty()) {
+			jTabbedPane1.setSelectedIndex(1);
+			jTextArea2.append(
+					"GEOLOCATION -> BOUNDING BOX AREA \n\nLa opción está seleccionada pero el campo está vacio.");
+			return false;
+		}
+		
+		else if(!getGeoIsBoundingBox() && !getBoundingBoxArea().replaceAll("\\s+"," ").isEmpty()) {
+			jTabbedPane1.setSelectedIndex(1);
+			jTextArea2.append(
+					"GEOLOCATION -> BOUNDING BOX AREA \n\nEl campo está completo pero la opción no está seleccionada.");
+			return false;
+		}
+		
 		if (getGeoIsLanguage()) {
 			this.setGeoIsLanguage(true);
-			this.setLGeoLanguante(this.getBoundingBoxArea());
+			this.setGeoLanguante(getLanguage());
 		}
-
-		// if(getGeoIsBoundingBox() && getBoundingBoxArea().)
 
 		if (getIsPenalyze() && !getIsPriority()) {
 			jTabbedPane1.setSelectedIndex(1);
@@ -1603,6 +1663,7 @@ public class mainMenu extends javax.swing.JFrame {
 			return false;
 		}
 
+		setIsFetchGeolocation(getIsFetchGeolocation());
 		setIsPenalyze(getIsPenalyze());
 		setIsBroken(getIsBroken());
 		setIsAll(getIsAll());
@@ -1692,6 +1753,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 		/* Create and display the form */
 		java.awt.EventQueue.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				try {
 					new mainMenu().setVisible(true);

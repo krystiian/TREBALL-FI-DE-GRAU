@@ -39,18 +39,51 @@ public class MyCrawler extends WebCrawler {
 				+ menu.enlacesValidos + " VALIDOS  |  " + menu.enlacesAnalizados + " ANALIZADOS  |  "
 				+ menu.enlacesErroneos + " ROTOS  |  " + menu.emailsFetched + " EMAILS");
 		String href = url.getURL().toLowerCase();
-		if (FILTERS.matcher(href).matches())
-			return false;
-		if ((menu.linkIsContains || menu.linkIsNoContains) && !visitLinkCondition(menu, href))
-			return false;
-		url.setPriority((byte) +url.getDepth());
-		if (menu.dataPriority < 0 && algorithms.pageContainsContent(referringPage, menu.contains, menu.isAll,
-				menu.isAtLeast, menu.isNone, menu)) {
-			url.setPriority(((byte) (url.getPriority() - menu.dataPriority + url.getDepth())));
+		/*if (FILTERS.matcher(href).matches())
+			return false;*/
+		
+		//if ((menu.linkIsContains || menu.linkIsNoContains) && !visitLinkCondition(menu, href)) return false;	
 
+
+		if(menu.isBroken)
+		{
+			if((menu.linkIsContains || menu.linkIsNoContains) && url.getDepth() > 1)
+			{
+				if(!visitLinkCondition(menu,referringPage.getWebURL().getURL()) && visitLinkCondition(menu,referringPage.getWebURL().getParentUrl())) return false;
+			}
 		}
-		if (menu.linkPriority < 0 && isUnderCondition(menu, url)) {
-			url.setPriority(((byte) (url.getPriority() - menu.linkPriority + url.getDepth())));
+		else
+		{
+			if((menu.linkIsContains || menu.linkIsNoContains) && !visitLinkCondition(menu, href)) return false;
+		}
+		
+		
+		
+		if(menu.isPriority)
+		{
+			url.setPriority((byte)3);
+			boolean found = false;
+			if (menu.dataPriority < 0 && algorithms.pageContainsContent(referringPage, menu.contains, menu.isAll,
+					menu.isAtLeast, menu.isNone, menu)) {
+				if(menu.isPenalyze) {
+					found = true;
+					url.setPriority((byte)(Byte.toUnsignedInt(url.getPriority()) + menu.dataPriority));
+				}
+				else url.setPriority((byte) (Byte.toUnsignedInt(url.getPriority())+ menu.dataPriority));
+			}
+			
+			if (menu.linkPriority < 0 && isUnderCondition(menu, url)) {
+				if(menu.isPenalyze) {
+					found = true;
+					url.setPriority((byte)(Byte.toUnsignedInt(url.getPriority()) + menu.linkPriority));
+				}
+				else url.setPriority((byte)(Byte.toUnsignedInt(url.getPriority())+ menu.linkPriority));
+			}
+			
+			if(menu.isPenalyze) {
+				if(found) url.setPriority((byte)(Byte.toUnsignedInt(url.getPriority()) + (url.getDepth()/10)%2));
+				else url.setPriority((byte)9);
+			}
 		}
 		return true;
 	}
@@ -65,7 +98,7 @@ public class MyCrawler extends WebCrawler {
 		String geoURL = webURL.getSubDomain()+"."+webURL.getDomain();
 		mainMenu menu = this.getMyController().menu;
 		menu.enlacesProcesados += 1;
-		if (page.getParseData() instanceof HtmlParseData && isUnderCondition(menu, page.getWebURL())
+		if (page.getParseData() instanceof HtmlParseData && isUnderCondition(menu, page.getWebURL()) && visitLinkCondition(menu, page.getWebURL().getURL())
 				&& algorithms.pageContainsContent(page, menu.contains, menu.isAll, menu.isAtLeast, menu.isNone, menu) && isGeolocation(geoURL,menu,menu.geoBoundingBox[0],menu.geoBoundingBox[1],menu.geoBoundingBox[2],menu.geoBoundingBox[3],page)) {
 			menu.enlacesValidos += 1;
 			menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesProcesados + " PROCESADOS  |  "

@@ -250,14 +250,14 @@ public class mainMenu extends javax.swing.JFrame {
 		jLabel8.setToolTipText(
 				"<html>\r\n\r\nSolo serán válidos aquellos enlaces que su contenido cumpla con la condición escogida.<br><br>\r\n\r\n</html>");
 		jRadioButton11 = new javax.swing.JRadioButton();
+		jRadioButton11.setSelected(true);
 		jRadioButton11.setBackground(new Color(57, 83, 109));
 		jRadioButton11.setFont(new Font("Dialog", Font.BOLD, 12));
 		jRadioButton11.setForeground(new Color(240, 255, 255));
 
 		jRadioButton11.setText("Excel Filename");
 		jRadioButton11.setToolTipText(
-				"<html>\r\n\r\nLos resultados extraidos se guardarán en un excel,<br>bajo el nombre {filename}_success.xlsx<br><br>\r\n\r\n<i> Si la opción Broken Links está activa, ser generara<br>un fichero {filename}_errores</i>\r\n\r\n</html>"); // NOI18N
-		jRadioButton11.setSelected(true);
+				"<html>\r\n\r\nLos resultados extraidos se guardarán en un excel,<br>bajo el nombre {filename}_success.xlsx<br><br>\r\n\r\n<i> Si la opción Broken Links está activa, ser generara<br>un fichero {filename}_errores</i>\r\n\r\n</html>");
 		jRadioButton11.addActionListener(new java.awt.event.ActionListener() {
 			@Override
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -290,14 +290,12 @@ public class mainMenu extends javax.swing.JFrame {
 		rdbtnGeolocation.setToolTipText(
 				"<html>\r\n\r\nSe extraerá la información siguiente del servidor donde está\r\n<br>localizada la página de interés<br>\r\n\r\n<ul>\r\n<li>Pais</li>\r\n<li>Ciudad</li>\r\n<li>Latitud | Longitud</li>\r\n</ul>\r\n\r\n</html>");
 		rdbtnGeolocation.setHorizontalAlignment(SwingConstants.CENTER);
-		rdbtnGeolocation.setSelected(true);
 		jRadioButton4 = new javax.swing.JRadioButton();
 		jRadioButton4.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		jRadioButton4.setBackground(new Color(57, 83, 109));
 		jRadioButton4.setFont(new Font("Dialog", Font.BOLD, 12));
 		jRadioButton4.setForeground(new Color(240, 255, 255));
 		jRadioButton4.setHorizontalAlignment(SwingConstants.CENTER);
-		jRadioButton4.setSelected(true);
 
 		jRadioButton4.setText("Language");
 		jRadioButton4.setToolTipText(
@@ -308,7 +306,6 @@ public class mainMenu extends javax.swing.JFrame {
 		jRadioButton5.setFont(new Font("Dialog", Font.BOLD, 12));
 		jRadioButton5.setForeground(new Color(240, 255, 255));
 		jRadioButton5.setHorizontalAlignment(SwingConstants.LEFT);
-		jRadioButton5.setSelected(true);
 
 		jRadioButton5.setText("Emails");
 		jRadioButton5.setToolTipText(
@@ -323,7 +320,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 		jTextField1 = new JTextField();
 		jTextField1.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		jTextField1.setText("http://www.tecnonews.info");
+		jTextField1.setText("http://www.epickg.com");
 		jTextField1.setColumns(10);
 
 		lblCrawlers = new JLabel("Crawlers");
@@ -440,6 +437,7 @@ public class mainMenu extends javax.swing.JFrame {
 		lblAnalyse.setHorizontalAlignment(SwingConstants.CENTER);
 
 		jRadioButton7 = new JRadioButton();
+		jRadioButton7.setSelected(true);
 		jRadioButton7.setBackground(new Color(57, 83, 109));
 		jRadioButton7.setFont(new Font("Dialog", Font.BOLD, 12));
 		jRadioButton7.setForeground(new Color(240, 255, 255));
@@ -463,6 +461,7 @@ public class mainMenu extends javax.swing.JFrame {
 		jTextField7.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
 
 		jTextField6 = new JTextField();
+		jTextField6.setText("twitter facebook instagram");
 		jTextField6.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
 
 		jTextField4 = new JTextField();
@@ -522,6 +521,7 @@ public class mainMenu extends javax.swing.JFrame {
 				new String[] { "Link", "Data", "Equal priority", "Link over data", "Data over link" }));
 
 		rdbtnPriority = new JRadioButton("Priority");
+		rdbtnPriority.setSelected(true);
 		rdbtnPriority.setBackground(new Color(57, 83, 109));
 		rdbtnPriority.setToolTipText(
 				"<html>\r\n\r\nIndicamos con que orden se procesarán los enlaces insertados en la cola<br><br>\r\n\r\n<ol>\r\n<li><u>Link</u> Los enlaces que cumplan con las condiciones de URL se <br>procesarán antes</li><br>\r\n<li><u>Data</u> Los enlaces encontrados en una página que cumpla<br> las condiciones de DATA se procesarán antes</li><br>\r\n<li><u>Link over Data</u> ,ambas condiciones tienen prioridad, pero los enlaces que<br> cumplan la condicion de URL se procesara antes </li><br>\r\n<li><u>Data over Link</u> ,ambas condiciones tienen prioridad, pero los enlaces encontrados<br>en una página que cumpla la condición DATA se procesarán antes.</li><br><br><br>\r\n\r\nSi la <u>opcion no se selecciona</u>, se procesarán los enlaces en orden de entrada.\r\n\r\n</html>");
@@ -601,6 +601,7 @@ public class mainMenu extends javax.swing.JFrame {
 		radioButton_3.setFont(new Font("Dialog", Font.BOLD, 12));
 
 		bPenalyze = new JRadioButton("Penalyze D.");
+		bPenalyze.setSelected(true);
 		bPenalyze.setBorder(new LineBorder(new Color(0, 0, 0)));
 		bPenalyze.setBackground(new Color(57, 83, 109));
 		bPenalyze.setToolTipText(

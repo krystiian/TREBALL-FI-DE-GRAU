@@ -58,7 +58,7 @@ import javax.swing.text.DefaultCaret;
 import com.christian.mavenproject2.analisy_algorithms.CreateMaps;
 import com.christian.mavenproject2.analisy_algorithms.MyAlgorithms;
 import com.christian.mavenproject2.analisy_algorithms.MyExcel;
-import com.christian.mavenproject2.analisy_algorithms.TimerTaskCalls;
+import com.christian.mavenproject2.analisy_algorithms.Database;
 import com.christian.mavenproject2.crawler.CrawlConfig;
 import com.christian.mavenproject2.crawler.CrawlController;
 import com.christian.mavenproject2.crawler.PageFetcher;
@@ -77,11 +77,11 @@ public class mainMenu extends javax.swing.JFrame {
 
 	public mainMenu menu = this;
 	public int enlacesTotales = 0; // OBTENIDOS
-	public int enlacesValidos = 0; // ENLACES CUMPLEN CON LO PEDIDO
-	public int enlacesErroneos = 0; // ENLACES CON ERROR
-	public int enlacesAnalizados = 0; // ENLACES GUARDADOS EN LA BBDD
+	public int enlacesAceptados = 0; // ENLACES CUMPLEN CON LO PEDIDO
+	public int enlacesCaidos = 0; // ENLACES CON ERROR
+	public int enlacesProcesados = 0; // ENLACES GUARDADOS EN LA BBDD
+	public int enlacesValidos = 0; // ENLACES GUARDADOS EN LA BBDD
 	public int emailsFetched = 0; // EMAILS RECOPILADOS
-	public int enlacesProcesados = 0;
 	public int linkPriority = 0;
 	public int dataPriority = 0;
 	public int crawlers = 5;
@@ -90,7 +90,6 @@ public class mainMenu extends javax.swing.JFrame {
 	public Connection con = null;
 	public float[] geoBoundingBox = {0,0,0,0};
 
-	public TimerTaskCalls periodFunction = new TimerTaskCalls();
 	public static Pattern filenameRegex = Pattern.compile("[_a-zA-Z0-9\\-\\.]+");
 
 	public Map<String, Object[]> data = new TreeMap<String, Object[]>();
@@ -108,6 +107,8 @@ public class mainMenu extends javax.swing.JFrame {
 	public String priority = "";
 	public String regex = "";
 	public String store = "";
+	public String dbUsername = "";
+	public String dbpassword = "";
 	public int current_sesion;
 	
 	
@@ -130,6 +131,7 @@ public class mainMenu extends javax.swing.JFrame {
 	public boolean isGeoLanguage = false;
 	public boolean isGeoBoundingBox = false;
 	public boolean fetchGeolocation = false;
+	public boolean dbStore = false;
 	
 	CrawlController controller;
 
@@ -144,20 +146,12 @@ public class mainMenu extends javax.swing.JFrame {
 		initComponents();
 		menu.data.put("0", new Object[] { "URL", "LANGUAGE", "EMAILS", "GEOLOCATION"});
 		menu.dataBroken.put("0", new Object[] { "STATUS", "URL", "LINK" });
-		menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesProcesados + " PROCESADOS  |  "
-				+ menu.enlacesValidos + " VALIDOS  |  " + menu.enlacesAnalizados + " ANALIZADOS  |  "
-				+ menu.enlacesErroneos + " ROTOS  |  " + menu.emailsFetched + " EMAILS");
+		menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
+				+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
+				+ menu.enlacesCaidos + " CAIDOS");
 		DefaultCaret caret = (DefaultCaret) this.jTextArea2.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-		jTextArea2.setEditable(false);
-		dbTest db = new dbTest();
-		try {
-			Connection con = db.main();
-			this.con = con;
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}		
+		jTextArea2.setEditable(false);		
 		// jProgressBar2.setMinimum(MY_MINIMUM);
 		// jProgressBar2.setMaximum(MY_MAXIMUM);
 		ToolTipManager.sharedInstance().setDismissDelay(20000);
@@ -272,7 +266,7 @@ public class mainMenu extends javax.swing.JFrame {
 		jRadioButton11.setFont(new Font("Dialog", Font.BOLD, 12));
 		jRadioButton11.setForeground(new Color(240, 255, 255));
 
-		jRadioButton11.setText("Excel Filename");
+		jRadioButton11.setText("Excel");
 		jRadioButton11.setToolTipText(
 				"<html>\r\n\r\nLos resultados extraidos se guardarán en un excel,<br>bajo el nombre {filename}_success.xlsx<br><br>\r\n\r\n<i> Si la opción Broken Links está activa, ser generara<br>un fichero {filename}_errores</i>\r\n\r\n</html>");
 		jRadioButton11.addActionListener(new java.awt.event.ActionListener() {
@@ -542,7 +536,7 @@ public class mainMenu extends javax.swing.JFrame {
 		rdbtnPriority.setFont(new Font("Dialog", Font.BOLD, 12));
 		rdbtnPriority.setForeground(new Color(240, 255, 255));
 
-		JLabel lblStorage = new JLabel("STORAGE");
+		JLabel lblStorage = new JLabel("RESULTS STORAGE");
 		lblStorage.setForeground(new Color(153, 204, 255));
 		lblStorage.setHorizontalAlignment(SwingConstants.CENTER);
 		lblStorage.setFont(new Font("Tahoma", Font.BOLD, 12));
@@ -621,321 +615,241 @@ public class mainMenu extends javax.swing.JFrame {
 				"<html>\r\n\r\nPenaliza la profundidad del enlace.<br><br>\r\n\r\nÚnicamente válido si existe una condición de prioridad activada.\r\n\r\n</html>");
 		bPenalyze.setForeground(new Color(240, 255, 255));
 		bPenalyze.setFont(new Font("Tahoma", Font.BOLD, 11));
+		
+		rdbtnDb = new JRadioButton("DB");
+		rdbtnDb.setHorizontalAlignment(SwingConstants.RIGHT);
+		rdbtnDb.setSelected(true);
+		rdbtnDb.setFont(new Font("Dialog", Font.BOLD, 12));
+		rdbtnDb.setBorder(new LineBorder(new Color(0, 0, 0)));
+		rdbtnDb.setForeground(new Color(240, 255, 255));
+		rdbtnDb.setBackground(new Color(57, 83, 109));
+		
+		txtRoot = new JTextField();
+		txtRoot.setText("root");
+		txtRoot.setColumns(10);
+		
+		txtyy = new JTextField();
+		txtyy.setText("900123yy");
+		txtyy.setColumns(10);
 		GroupLayout gl_jLayeredPane2 = new GroupLayout(jLayeredPane2);
-		gl_jLayeredPane2
-				.setHorizontalGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING).addGroup(gl_jLayeredPane2
-						.createSequentialGroup().addContainerGap().addGroup(gl_jLayeredPane2
-								.createParallelGroup(Alignment.TRAILING).addGroup(gl_jLayeredPane2
-										.createSequentialGroup().addGroup(gl_jLayeredPane2
-												.createParallelGroup(Alignment.LEADING).addGroup(gl_jLayeredPane2
-														.createParallelGroup(Alignment.TRAILING).addComponent(
-																rdbtnPriority)
-														.addGroup(gl_jLayeredPane2.createSequentialGroup()
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.LEADING)
-																		.addComponent(lblCrawlers,
-																				GroupLayout.PREFERRED_SIZE, 81,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(lblSeed,
-																				GroupLayout.PREFERRED_SIZE, 81,
-																				GroupLayout.PREFERRED_SIZE))
-																.addGap(4))
-														.addComponent(radioButton_2, GroupLayout.PREFERRED_SIZE, 140,
-																GroupLayout.PREFERRED_SIZE))
-												.addComponent(radioButton_3, GroupLayout.PREFERRED_SIZE, 140,
-														GroupLayout.PREFERRED_SIZE))
-										.addPreferredGap(ComponentPlacement.RELATED)
-										.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
-												.addComponent(lblAnalyse, GroupLayout.DEFAULT_SIZE, 198,
-														Short.MAX_VALUE)
-												.addComponent(lblStorage, GroupLayout.DEFAULT_SIZE, 198,
-														Short.MAX_VALUE)
-												.addGroup(
-														gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING, false)
-																.addComponent(lblCrawlerParameters, Alignment.LEADING,
-																		GroupLayout.DEFAULT_SIZE,
-																		GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-																.addComponent(jTextField1, Alignment.LEADING,
-																		GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE))
-												.addGroup(gl_jLayeredPane2.createSequentialGroup()
-														.addComponent(jTextField3, GroupLayout.PREFERRED_SIZE, 42,
-																GroupLayout.PREFERRED_SIZE)
-														.addPreferredGap(ComponentPlacement.RELATED)
-														.addComponent(lblDepth)
-														.addPreferredGap(ComponentPlacement.RELATED)
-														.addComponent(jTextField9, GroupLayout.PREFERRED_SIZE, 36,
-																GroupLayout.PREFERRED_SIZE)
-														.addPreferredGap(ComponentPlacement.RELATED)
-														.addComponent(lblTime)
-														.addPreferredGap(ComponentPlacement.RELATED)
-														.addComponent(jTextField5, GroupLayout.PREFERRED_SIZE, 39,
-																GroupLayout.PREFERRED_SIZE))
-												.addGroup(gl_jLayeredPane2.createSequentialGroup()
-														.addGroup(gl_jLayeredPane2
-																.createParallelGroup(Alignment.LEADING, false)
-																.addComponent(jRadioButton10, GroupLayout.DEFAULT_SIZE,
-																		GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-																.addComponent(jRadioButton5, GroupLayout.DEFAULT_SIZE,
-																		89, Short.MAX_VALUE))
-														.addGroup(gl_jLayeredPane2
-																.createParallelGroup(Alignment.LEADING)
-																.addGroup(gl_jLayeredPane2.createSequentialGroup()
-																		.addGap(16).addComponent(jRadioButton4))
-																.addGroup(gl_jLayeredPane2.createSequentialGroup()
-																		.addPreferredGap(ComponentPlacement.UNRELATED)
-																		.addComponent(rdbtnGeolocation,
-																				GroupLayout.DEFAULT_SIZE, 95,
-																				Short.MAX_VALUE))))
-												.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
-														.addGroup(Alignment.LEADING, gl_jLayeredPane2
-																.createSequentialGroup()
-																.addComponent(comboBox_1, GroupLayout.PREFERRED_SIZE,
-																		GroupLayout.DEFAULT_SIZE,
-																		GroupLayout.PREFERRED_SIZE)
-																.addPreferredGap(ComponentPlacement.RELATED)
-																.addComponent(bPenalyze, GroupLayout.DEFAULT_SIZE, 103,
-																		Short.MAX_VALUE))
-														.addComponent(lblDoNotVisit, GroupLayout.DEFAULT_SIZE,
-																GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-														.addComponent(linkNoContains, Alignment.LEADING,
-																GroupLayout.DEFAULT_SIZE, 186, Short.MAX_VALUE)
-														.addComponent(linkContains))))
-								.addGroup(gl_jLayeredPane2.createSequentialGroup().addComponent(jRadioButton11)
-										.addPreferredGap(ComponentPlacement.RELATED).addComponent(jTextField8,
-												GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE)))
-						.addGap(51)
-						.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
-								.addComponent(lblConditionsThatMust, GroupLayout.PREFERRED_SIZE, 341,
-										GroupLayout.PREFERRED_SIZE)
-								.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING, false)
-										.addGroup(gl_jLayeredPane2.createSequentialGroup()
-												.addComponent(radioButton_1, GroupLayout.DEFAULT_SIZE,
-														GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-												.addPreferredGap(ComponentPlacement.RELATED).addComponent(comboBox_2,
-														GroupLayout.PREFERRED_SIZE, 185, GroupLayout.PREFERRED_SIZE))
-										.addGroup(gl_jLayeredPane2.createSequentialGroup()
-												.addComponent(radioButton, GroupLayout.DEFAULT_SIZE,
-														GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-												.addPreferredGap(ComponentPlacement.UNRELATED)
-												.addComponent(btnDisplayMap, GroupLayout.PREFERRED_SIZE, 126,
-														GroupLayout.PREFERRED_SIZE))
-										.addComponent(textField_3))
-								.addGroup(gl_jLayeredPane2.createSequentialGroup()
-										.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
-												.addComponent(jRadioButton2, GroupLayout.PREFERRED_SIZE, 85,
-														GroupLayout.PREFERRED_SIZE)
-												.addGroup(gl_jLayeredPane2
-														.createParallelGroup(Alignment.LEADING)
-														.addComponent(jRadioButton7, Alignment.TRAILING,
-																GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE,
-																Short.MAX_VALUE)
-														.addComponent(jLabel8, Alignment.TRAILING,
-																GroupLayout.PREFERRED_SIZE, 61,
-																GroupLayout.PREFERRED_SIZE)
-														.addComponent(jRadioButton1, GroupLayout.DEFAULT_SIZE, 97,
-																Short.MAX_VALUE)))
-										.addPreferredGap(ComponentPlacement.RELATED)
-										.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
-												.addComponent(lblNewLabel, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE,
-														250, Short.MAX_VALUE)
-												.addGroup(gl_jLayeredPane2.createSequentialGroup()
-														.addComponent(jRadioButton8, GroupLayout.PREFERRED_SIZE, 113,
-																GroupLayout.PREFERRED_SIZE)
-														.addPreferredGap(ComponentPlacement.RELATED)
-														.addComponent(jRadioButton3, GroupLayout.PREFERRED_SIZE, 66,
-																GroupLayout.PREFERRED_SIZE)
-														.addPreferredGap(ComponentPlacement.RELATED,
-																GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-														.addComponent(jRadioButton9, GroupLayout.PREFERRED_SIZE, 71,
-																GroupLayout.PREFERRED_SIZE))
-												.addComponent(jTextField2, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE,
-														250, Short.MAX_VALUE)
-												.addComponent(label, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 250,
-														Short.MAX_VALUE)
-												.addComponent(lblData, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE,
-														250, Short.MAX_VALUE)
-												.addComponent(jTextField6, GroupLayout.DEFAULT_SIZE, 250,
-														Short.MAX_VALUE)
-												.addComponent(jTextField4, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE,
-														250, Short.MAX_VALUE)
-												.addComponent(jTextField7, GroupLayout.DEFAULT_SIZE, 250,
-														Short.MAX_VALUE))))
-						.addPreferredGap(ComponentPlacement.RELATED)
-						.addComponent(label_1, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE).addGap(19))
-						.addGroup(gl_jLayeredPane2.createSequentialGroup().addGap(301)
-								.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING, false)
-										.addComponent(jRadioButton6, Alignment.LEADING, GroupLayout.DEFAULT_SIZE,
-												GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-										.addComponent(jToggleButton1, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 213,
-												Short.MAX_VALUE))
-								.addContainerGap(293, Short.MAX_VALUE)));
-		gl_jLayeredPane2.setVerticalGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
+		gl_jLayeredPane2.setHorizontalGroup(
+			gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
 				.addGroup(gl_jLayeredPane2.createSequentialGroup()
-						.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
-								.addGroup(
-										gl_jLayeredPane2.createSequentialGroup().addGap(35)
-												.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
-														.addComponent(lblCrawlerParameters)
-														.addComponent(lblConditionsThatMust))
-												.addGap(18)
-												.addGroup(gl_jLayeredPane2
-														.createParallelGroup(Alignment.LEADING)
-														.addGroup(gl_jLayeredPane2
-																.createParallelGroup(
-																		Alignment.BASELINE)
-																.addComponent(lblSeed).addComponent(jTextField1,
-																		GroupLayout.PREFERRED_SIZE,
-																		GroupLayout.DEFAULT_SIZE,
-																		GroupLayout.PREFERRED_SIZE))
-														.addGroup(gl_jLayeredPane2.createSequentialGroup().addGap(11)
-																.addComponent(lblData, GroupLayout.PREFERRED_SIZE, 25,
-																		GroupLayout.PREFERRED_SIZE)
-																.addPreferredGap(ComponentPlacement.RELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(lblCrawlers)
-																		.addComponent(jTextField3,
-																				GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(lblDepth)
-																		.addComponent(jTextField9,
-																				GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(lblTime)
-																		.addComponent(jTextField5,
-																				GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(jTextField2,
-																				GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(jLabel8,
-																				GroupLayout.PREFERRED_SIZE, 18,
-																				GroupLayout.PREFERRED_SIZE))))
-												.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
-														.addGroup(gl_jLayeredPane2.createSequentialGroup()
-																.addPreferredGap(ComponentPlacement.RELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(jRadioButton8)
-																		.addComponent(jRadioButton3)
-																		.addComponent(jRadioButton9))
-																.addGap(18).addComponent(label))
-														.addGroup(gl_jLayeredPane2.createSequentialGroup().addGap(43)
-																.addComponent(lblDoNotVisit)))
-												.addPreferredGap(ComponentPlacement.RELATED)
-												.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
-														.addGroup(gl_jLayeredPane2.createSequentialGroup()
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(linkNoContains,
-																				GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(radioButton_2,
-																				GroupLayout.PREFERRED_SIZE, 25,
-																				GroupLayout.PREFERRED_SIZE))
-																.addPreferredGap(ComponentPlacement.RELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(linkContains,
-																				GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(radioButton_3,
-																				GroupLayout.PREFERRED_SIZE, 25,
-																				GroupLayout.PREFERRED_SIZE))
-																.addPreferredGap(ComponentPlacement.RELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.LEADING)
-																		.addComponent(rdbtnPriority)
-																		.addGroup(gl_jLayeredPane2
-																				.createParallelGroup(Alignment.BASELINE)
-																				.addComponent(comboBox_1,
-																						GroupLayout.PREFERRED_SIZE,
-																						GroupLayout.DEFAULT_SIZE,
-																						GroupLayout.PREFERRED_SIZE)
-																				.addComponent(bPenalyze)))
-																.addGap(16)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(lblAnalyse)
-																		.addComponent(lblNewLabel)))
-														.addGroup(gl_jLayeredPane2.createSequentialGroup()
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(jRadioButton7).addComponent(
-																				jTextField6, GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE))
-																.addPreferredGap(ComponentPlacement.UNRELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(jRadioButton1).addComponent(
-																				jTextField4, GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE))
-																.addPreferredGap(ComponentPlacement.UNRELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(jRadioButton2).addComponent(
-																				jTextField7, GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE))))
-												.addGap(1)
-												.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
-														.addGroup(gl_jLayeredPane2.createSequentialGroup()
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(jRadioButton10)
-																		.addComponent(rdbtnGeolocation))
-																.addPreferredGap(ComponentPlacement.RELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(jRadioButton5)
-																		.addComponent(jRadioButton4,
-																				GroupLayout.PREFERRED_SIZE, 23,
-																				GroupLayout.PREFERRED_SIZE))
-																.addGap(14).addComponent(lblStorage)
-																.addPreferredGap(ComponentPlacement.UNRELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(jTextField8,
-																				GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(jRadioButton11,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				Short.MAX_VALUE)))
-														.addGroup(gl_jLayeredPane2.createSequentialGroup().addGap(10)
-																.addComponent(textField_3, GroupLayout.PREFERRED_SIZE,
-																		GroupLayout.DEFAULT_SIZE,
-																		GroupLayout.PREFERRED_SIZE)
-																.addGap(4)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(btnDisplayMap)
-																		.addComponent(radioButton))
-																.addPreferredGap(ComponentPlacement.UNRELATED)
-																.addGroup(gl_jLayeredPane2
-																		.createParallelGroup(Alignment.BASELINE)
-																		.addComponent(comboBox_2,
-																				GroupLayout.PREFERRED_SIZE,
-																				GroupLayout.DEFAULT_SIZE,
-																				GroupLayout.PREFERRED_SIZE)
-																		.addComponent(radioButton_1))))
-												.addGap(20)
-												.addComponent(jToggleButton1, GroupLayout.PREFERRED_SIZE, 29,
-														GroupLayout.PREFERRED_SIZE)
-												.addPreferredGap(ComponentPlacement.RELATED)
-												.addComponent(jRadioButton6))
-								.addGroup(gl_jLayeredPane2.createSequentialGroup().addContainerGap()
-										.addComponent(label_1)))
-						.addContainerGap()));
+					.addGap(9)
+					.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
+							.addGroup(gl_jLayeredPane2.createSequentialGroup()
+								.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+									.addComponent(lblCrawlers, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE)
+									.addComponent(lblSeed, GroupLayout.PREFERRED_SIZE, 81, GroupLayout.PREFERRED_SIZE))
+								.addGap(4))
+							.addComponent(radioButton_2, GroupLayout.PREFERRED_SIZE, 140, GroupLayout.PREFERRED_SIZE)
+							.addComponent(rdbtnPriority))
+						.addComponent(radioButton_3, GroupLayout.PREFERRED_SIZE, 140, GroupLayout.PREFERRED_SIZE))
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_jLayeredPane2.createSequentialGroup()
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+								.addComponent(lblAnalyse, GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
+								.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING, false)
+									.addComponent(lblCrawlerParameters, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+									.addComponent(jTextField1, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE))
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addComponent(jTextField3, GroupLayout.PREFERRED_SIZE, 42, GroupLayout.PREFERRED_SIZE)
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addComponent(lblDepth)
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addComponent(jTextField9, GroupLayout.PREFERRED_SIZE, 36, GroupLayout.PREFERRED_SIZE)
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addComponent(lblTime)
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addComponent(jTextField5, GroupLayout.PREFERRED_SIZE, 39, GroupLayout.PREFERRED_SIZE))
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING, false)
+										.addComponent(jRadioButton10, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+										.addComponent(jRadioButton5, GroupLayout.DEFAULT_SIZE, 89, Short.MAX_VALUE))
+									.addPreferredGap(ComponentPlacement.UNRELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+										.addGroup(gl_jLayeredPane2.createSequentialGroup()
+											.addGap(10)
+											.addComponent(jRadioButton4))
+										.addComponent(rdbtnGeolocation, GroupLayout.DEFAULT_SIZE, 89, Short.MAX_VALUE)))
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addComponent(comboBox_1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addComponent(bPenalyze, GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE))
+								.addComponent(lblDoNotVisit, GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
+								.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING, false)
+									.addComponent(linkContains, Alignment.LEADING)
+									.addComponent(linkNoContains, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE)))
+							.addGap(51))
+						.addGroup(gl_jLayeredPane2.createSequentialGroup()
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
+								.addGroup(Alignment.LEADING, gl_jLayeredPane2.createSequentialGroup()
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
+										.addComponent(jRadioButton11)
+										.addComponent(rdbtnDb, GroupLayout.PREFERRED_SIZE, 57, GroupLayout.PREFERRED_SIZE))
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+										.addComponent(txtRoot, 120, 120, 120)
+										.addComponent(txtyy, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE)
+										.addComponent(jTextField8, GroupLayout.PREFERRED_SIZE, 120, GroupLayout.PREFERRED_SIZE)))
+								.addComponent(lblStorage, GroupLayout.PREFERRED_SIZE, 187, GroupLayout.PREFERRED_SIZE))
+							.addGap(60)))
+					.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
+						.addComponent(lblConditionsThatMust, GroupLayout.PREFERRED_SIZE, 341, GroupLayout.PREFERRED_SIZE)
+						.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING, false)
+							.addGroup(gl_jLayeredPane2.createSequentialGroup()
+								.addComponent(radioButton_1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addPreferredGap(ComponentPlacement.RELATED)
+								.addComponent(comboBox_2, GroupLayout.PREFERRED_SIZE, 185, GroupLayout.PREFERRED_SIZE))
+							.addGroup(gl_jLayeredPane2.createSequentialGroup()
+								.addComponent(radioButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addPreferredGap(ComponentPlacement.UNRELATED)
+								.addComponent(btnDisplayMap, GroupLayout.PREFERRED_SIZE, 126, GroupLayout.PREFERRED_SIZE))
+							.addComponent(textField_3)
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+								.addComponent(jRadioButton6)
+								.addComponent(jToggleButton1, GroupLayout.PREFERRED_SIZE, 97, GroupLayout.PREFERRED_SIZE)))
+						.addGroup(gl_jLayeredPane2.createSequentialGroup()
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
+								.addComponent(jRadioButton7, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+								.addComponent(jLabel8, GroupLayout.PREFERRED_SIZE, 61, GroupLayout.PREFERRED_SIZE)
+								.addComponent(jRadioButton1, Alignment.LEADING, GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE)
+								.addComponent(jRadioButton2, GroupLayout.PREFERRED_SIZE, 85, GroupLayout.PREFERRED_SIZE))
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+								.addComponent(lblNewLabel, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addComponent(jRadioButton8, GroupLayout.PREFERRED_SIZE, 113, GroupLayout.PREFERRED_SIZE)
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addComponent(jRadioButton3, GroupLayout.PREFERRED_SIZE, 66, GroupLayout.PREFERRED_SIZE)
+									.addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+									.addComponent(jRadioButton9, GroupLayout.PREFERRED_SIZE, 71, GroupLayout.PREFERRED_SIZE))
+								.addComponent(jTextField2, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+								.addComponent(label, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+								.addComponent(lblData, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+								.addComponent(jTextField6, GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+								.addComponent(jTextField4, Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
+								.addComponent(jTextField7, GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE))))
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(label_1, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+					.addGap(12))
+		);
+		gl_jLayeredPane2.setVerticalGroup(
+			gl_jLayeredPane2.createParallelGroup(Alignment.TRAILING)
+				.addGroup(gl_jLayeredPane2.createSequentialGroup()
+					.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_jLayeredPane2.createSequentialGroup()
+							.addGap(35)
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+								.addComponent(lblCrawlerParameters)
+								.addComponent(lblConditionsThatMust))
+							.addGap(18)
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+								.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+									.addComponent(lblSeed)
+									.addComponent(jTextField1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addGap(11)
+									.addComponent(lblData, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(lblCrawlers)
+										.addComponent(jTextField3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addComponent(lblDepth)
+										.addComponent(jTextField9, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addComponent(lblTime)
+										.addComponent(jTextField5, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addComponent(jTextField2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addComponent(jLabel8, GroupLayout.PREFERRED_SIZE, 18, GroupLayout.PREFERRED_SIZE))))
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(jRadioButton8)
+										.addComponent(jRadioButton3)
+										.addComponent(jRadioButton9))
+									.addGap(18)
+									.addComponent(label))
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addGap(43)
+									.addComponent(lblDoNotVisit)))
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(linkNoContains, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addComponent(radioButton_2, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE))
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(linkContains, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addComponent(radioButton_3, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE))
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+										.addComponent(rdbtnPriority)
+										.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+											.addComponent(comboBox_1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+											.addComponent(bPenalyze)))
+									.addGap(16)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(lblAnalyse)
+										.addComponent(lblNewLabel)))
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(jRadioButton7)
+										.addComponent(jTextField6, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+									.addPreferredGap(ComponentPlacement.UNRELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(jRadioButton1)
+										.addComponent(jTextField4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+									.addPreferredGap(ComponentPlacement.UNRELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(jRadioButton2)
+										.addComponent(jTextField7, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))))
+							.addGap(1)
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(jRadioButton10)
+										.addComponent(rdbtnGeolocation))
+									.addPreferredGap(ComponentPlacement.RELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(jRadioButton5)
+										.addComponent(jRadioButton4, GroupLayout.PREFERRED_SIZE, 23, GroupLayout.PREFERRED_SIZE))
+									.addPreferredGap(ComponentPlacement.UNRELATED)
+									.addComponent(lblStorage)
+									.addGap(14)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(jRadioButton11, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+										.addComponent(jTextField8, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+									.addGap(2))
+								.addGroup(gl_jLayeredPane2.createSequentialGroup()
+									.addGap(10)
+									.addComponent(textField_3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+									.addGap(4)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(btnDisplayMap)
+										.addComponent(radioButton))
+									.addPreferredGap(ComponentPlacement.UNRELATED)
+									.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+										.addComponent(comboBox_2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+										.addComponent(radioButton_1))))
+							.addGap(2)
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.BASELINE)
+								.addComponent(txtRoot, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+								.addComponent(rdbtnDb))
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addGroup(gl_jLayeredPane2.createParallelGroup(Alignment.LEADING)
+								.addComponent(txtyy, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
+								.addComponent(jToggleButton1, GroupLayout.PREFERRED_SIZE, 29, GroupLayout.PREFERRED_SIZE)))
+						.addGroup(gl_jLayeredPane2.createSequentialGroup()
+							.addContainerGap()
+							.addComponent(label_1)))
+					.addPreferredGap(ComponentPlacement.RELATED)
+					.addComponent(jRadioButton6)
+					.addGap(12))
+		);
 		jLayeredPane2.setLayout(gl_jLayeredPane2);
 		jPanel1.setLayout(jPanel1Layout);
 
@@ -1004,14 +918,26 @@ public class mainMenu extends javax.swing.JFrame {
 		if (jToggleButton1.getText() == "START") {
 			jTabbedPane1.setSelectedIndex(1);
 			if (validateParams()) {
-				insertSesion();
-				setCurrentSesionValue();
-				updateFields();
+				if(this.dbStore)
+				{
+					try {
+						String[] values = {this.dbUsername,this.dbpassword};
+						Connection con = Database.main(values);
+						this.con = con;
+						insertSesion();
+						setCurrentSesionValue();
+						updateFields();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						menu.writeConsole("The Username or Password introduced for DB is not correct.");
+						e.printStackTrace();
+					}
+				}
 				Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 					@Override
 					public void run() {
 						controller.shutdown();
-						updateEndTime();
+						if(menu.dbStore) updateEndTime();
 						if (menu.isStore) {
 							try {
 								Thread.sleep(10000);
@@ -1148,6 +1074,14 @@ public class mainMenu extends javax.swing.JFrame {
 		this.priority = n;
 	}
 
+	public void setUsername(String n) {
+		this.dbUsername = n;
+	}
+	
+	public void setPassword(String n) {
+		this.dbpassword = n;
+	}
+	
 	public void setIsAtLeast(boolean n) {
 		this.isAtLeast = n;
 	}
@@ -1196,6 +1130,10 @@ public class mainMenu extends javax.swing.JFrame {
 		this.fetchGeolocation = n;
 	}
 	
+	public void setStoreDb(boolean n) {
+		this.dbStore = n;
+	}
+	
 	public void setGeoLanguante(String n) {
 		this.geoLanguage = n;
 	}
@@ -1217,7 +1155,15 @@ public class mainMenu extends javax.swing.JFrame {
 	public String getCrawlers() {
 		return this.jTextField3.getText();
 	}
-
+	
+	public String getdbUsername() {
+		return this.txtRoot.getText();
+	}
+	
+	public String getdbPassword() {
+		return this.txtyy.getText();
+	}
+	
 	public String getProfundidad() {
 		return this.jTextField9.getText();
 	}
@@ -1334,6 +1280,10 @@ public class mainMenu extends javax.swing.JFrame {
 		return this.rdbtnGeolocation.isSelected();
 	}
 
+	public Boolean getIsDbStore() {
+		return this.rdbtnDb.isSelected();
+	}
+	
 	public void writeConsole(String s) {
 		jTextArea2.append(s);
 
@@ -1631,6 +1581,30 @@ public class mainMenu extends javax.swing.JFrame {
 			return false;
 		}
 		
+		
+		if(!getIsDbStore() && !getdbUsername().replaceAll("\\s+"," ").isEmpty()) {
+			jTabbedPane1.setSelectedIndex(1);
+			jTextArea2.append(
+					"RESULTS STORAGE -> DB \n\nEl campo está completo pero la opción no está seleccionada.");
+			return false;
+		}
+		
+		else if(getIsDbStore() && getdbUsername().replaceAll("\\s+"," ").isEmpty()) {
+			jTabbedPane1.setSelectedIndex(1);
+			jTextArea2.append(
+					"RESULTS STORAGE -> DB \n\nLa opción está seleccionada pero el campo está vacio.");
+			return false;
+		}
+		
+		else if(getIsDbStore() && !getdbUsername().replaceAll("\\s+", " ").isEmpty())
+		{
+			setPassword(getdbPassword());
+			setUsername(getdbUsername());
+			setStoreDb(getIsDbStore());
+		}
+		
+		
+		
 		if (getGeoIsLanguage()) {
 			this.setGeoIsLanguage(true);
 			this.setGeoLanguante(getLanguage());
@@ -1883,6 +1857,7 @@ public class mainMenu extends javax.swing.JFrame {
 			e1.printStackTrace();
 		}
 	}
+	
 	public void updateEndTime()
 	{
 		try {
@@ -1996,4 +1971,7 @@ public class mainMenu extends javax.swing.JFrame {
 	private JRadioButton radioButton_3;
 	private JRadioButton rdbtnPriority;
 	private JRadioButton bPenalyze;
+	private JRadioButton rdbtnDb;
+	private JTextField txtRoot;
+	private JTextField txtyy;
 }

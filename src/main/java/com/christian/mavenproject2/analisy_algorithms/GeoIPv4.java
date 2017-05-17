@@ -1,4 +1,4 @@
-package com.christian.mavenproject2.geoip;
+package com.christian.mavenproject2.analisy_algorithms;
 
 import java.io.IOException;
 import java.net.InetAddress;

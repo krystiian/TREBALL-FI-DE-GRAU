@@ -1,4 +1,4 @@
-package com.christian.mavenproject2.main;
+package com.christian.mavenproject2.analisy_algorithms;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,19 +10,19 @@ import java.util.Calendar;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.jdbc.PreparedStatement;
 
-public class dbTest {
+public class Database {
 
 	public static Connection conn = null;
 	public static String url = "jdbc:mysql://localhost:3306/";
 	public static String dbName= "dbTFG";
 	public static String properties = "?createDatabaseIfNotExist=true";
 	public static String driver ="com.mysql.cj.jdbc.Driver";
-	public static String userName = "root";
-	public static String password = "900123yy";
 	
-	public static Connection main() throws Exception
+	public static Connection main(String args[]) throws Exception
 	{
-				
+			
+		String userName = args[0];
+		String password = args[1];
 		conn = DriverManager.getConnection(url+dbName+properties,userName,password);
 		Statement stmt = (Statement) conn.createStatement();
 	      

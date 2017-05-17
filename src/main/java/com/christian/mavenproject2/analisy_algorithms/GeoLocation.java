@@ -1,4 +1,4 @@
-package com.christian.mavenproject2.geoip;
+package com.christian.mavenproject2.analisy_algorithms;
 
 import com.maxmind.geoip.Location;
 import java.math.BigInteger;

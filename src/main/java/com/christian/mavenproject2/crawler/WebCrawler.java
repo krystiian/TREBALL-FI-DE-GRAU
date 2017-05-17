@@ -17,6 +17,7 @@
 
 package com.christian.mavenproject2.crawler;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.christian.mavenproject2.main.mainMenu;
+import com.mysql.cj.jdbc.PreparedStatement;
 
 /**
  * WebCrawler class in the Runnable class that is executed by each crawler
@@ -399,15 +401,15 @@ public class WebCrawler implements Runnable {
 					if (movedToUrl == null) {
 
 						if (isUnderCondition(menu, curURL.getParentUrl()) && menu.isBroken) {
-							menu.enlacesErroneos += 1;
-							menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesProcesados
-									+ " PROCESADOS  |  " + menu.enlacesValidos + " VALIDOS  |  "
-									+ menu.enlacesAnalizados + " ANALIZADOS  |  " + menu.enlacesErroneos + " ROTOS  |  "
-									+ menu.emailsFetched + " EMAILS");
+							menu.enlacesCaidos += 1;
+							menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
+									+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
+									+ menu.enlacesCaidos + " CAIDOS");
 							menu.writeConsole(curURL.getParentUrl() + "\nHAS A BROKEN LINK: " + curURL.getURL()
 									+ "\nCODE: " + fetchResult.getStatusCode() + "\n\n");
-							menu.dataBroken.put(menu.enlacesErroneos + 1 + "",
+							menu.dataBroken.put(menu.enlacesCaidos + 1 + "",
 									new Object[] { page.getStatusCode() + "", curURL.getParentUrl(), curURL.getURL() });
+							if(menu.dbStore) insertIntoUrlErronea(menu, curURL.getURL().toLowerCase(), curURL.getParentUrl().toLowerCase(), page.getStatusCode(), menu.current_sesion);
 						}
 						logger.warn("Unexpected error, URL: {} is redirected to NOTHING", curURL);
 						return;
@@ -451,15 +453,15 @@ public class WebCrawler implements Runnable {
 					onUnexpectedStatusCode(curURL.getURL(), fetchResult.getStatusCode(), contentType, description);
 
 					if (isUnderCondition(menu, curURL.getParentUrl()) && menu.isBroken) {
-						menu.enlacesErroneos += 1;
-						menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesProcesados
-								+ " PROCESADOS  |  " + menu.enlacesValidos + " VALIDOS  |  " + menu.enlacesAnalizados
-								+ " ANALIZADOS  |  " + menu.enlacesErroneos + " ROTOS  |  " + menu.emailsFetched
-								+ " EMAILS");
+						menu.enlacesCaidos += 1;
+						menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
+								+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
+								+ menu.enlacesCaidos + " CAIDOS");
 						menu.writeConsole(curURL.getParentUrl() + "\nHAS A BROKEN LINK: " + curURL.getURL() + "\nCODE: "
 								+ fetchResult.getStatusCode() + "\n\n");
-						menu.dataBroken.put(menu.enlacesErroneos + 1 + "",
+						menu.dataBroken.put(menu.enlacesCaidos + 1 + "",
 								new Object[] { page.getStatusCode() + "", curURL.getParentUrl(), curURL.getURL() });
+						if(menu.dbStore) insertIntoUrlErronea(menu, curURL.getURL().toLowerCase(), curURL.getParentUrl().toLowerCase(), page.getStatusCode(), menu.current_sesion);
 					}
 				}
 
@@ -591,5 +593,17 @@ public class WebCrawler implements Runnable {
 				return false;
 		}
 		return true;
+	}
+	
+	public void insertIntoUrlErronea(mainMenu menu, String url, String url_padre, int errorCode, int sesion_id)
+	{
+		try {
+			String url_erronea = "INSERT INTO url_erronea(url,url_padre,error_code,sesion_id) VALUES('"+url+"','"+url_padre+"',"+errorCode+","+sesion_id+");";
+			PreparedStatement stmt = (PreparedStatement) menu.con.prepareStatement(url_erronea);
+			stmt.executeUpdate();
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 }

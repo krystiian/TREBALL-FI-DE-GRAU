@@ -5,6 +5,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.regex.Pattern;
 
+import javax.annotation.Priority;
+
 import org.omg.CosNaming.NamingContextExtPackage.AddressHelper;
 
 import com.christian.mavenproject2.analisy_algorithms.CreateMaps;
@@ -35,6 +37,7 @@ public class MyCrawler extends WebCrawler {
 	public boolean shouldVisit(Page referringPage, WebURL url) {
 		mainMenu menu = this.getMyController().menu;
 		menu.enlacesTotales += 1;
+		if(url.getDepth() == 0) return true;
 		menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesProcesados + " PROCESADOS  |  "
 				+ menu.enlacesValidos + " VALIDOS  |  " + menu.enlacesAnalizados + " ANALIZADOS  |  "
 				+ menu.enlacesErroneos + " ROTOS  |  " + menu.emailsFetched + " EMAILS");
@@ -43,51 +46,12 @@ public class MyCrawler extends WebCrawler {
 			return false;*/
 		
 		//if ((menu.linkIsContains || menu.linkIsNoContains) && !visitLinkCondition(menu, href)) return false;	
-
-
-		if(menu.isBroken)
-		{
-			if((menu.linkIsContains || menu.linkIsNoContains) && url.getDepth() > 1)
-			{
-				if(!visitLinkCondition(menu,referringPage.getWebURL().getURL()) && visitLinkCondition(menu,referringPage.getWebURL().getParentUrl())) return false;
-			}
-		}
-		else
-		{
-			if((menu.linkIsContains || menu.linkIsNoContains) && !visitLinkCondition(menu, href)) return false;
-		}
 		
-		
-		
-		if(menu.isPriority)
-		{
-			url.setPriority((byte)3);
-			boolean found = false;
-			if (menu.dataPriority < 0 && algorithms.pageContainsContent(referringPage, menu.contains, menu.isAll,
-					menu.isAtLeast, menu.isNone, menu)) {
-				if(menu.isPenalyze) {
-					found = true;
-					url.setPriority((byte)(Byte.toUnsignedInt(url.getPriority()) + menu.dataPriority));
-				}
-				else url.setPriority((byte) (Byte.toUnsignedInt(url.getPriority())+ menu.dataPriority));
-			}
-			
-			if (menu.linkPriority < 0 && isUnderCondition(menu, url)) {
-				if(menu.isPenalyze) {
-					found = true;
-					url.setPriority((byte)(Byte.toUnsignedInt(url.getPriority()) + menu.linkPriority));
-				}
-				else url.setPriority((byte)(Byte.toUnsignedInt(url.getPriority())+ menu.linkPriority));
-			}
-			
-			if(menu.isPenalyze) {
-				if(found) url.setPriority((byte)(Byte.toUnsignedInt(url.getPriority()) + (url.getDepth()/10)%2));
-				else url.setPriority((byte)9);
-			}
-		}
+		if(menu.linkIsContains || menu.linkIsNoContains) if(!shouldVisitLink(url, menu, referringPage)) return false;
+		if(menu.isPriority) applyPriority(url, referringPage, menu);
 		return true;
 	}
-
+	
 	/**
 	 * This function is called when a page is fetched and ready to be processed
 	 * by your program.
@@ -98,6 +62,7 @@ public class MyCrawler extends WebCrawler {
 		String geoURL = webURL.getSubDomain()+"."+webURL.getDomain();
 		mainMenu menu = this.getMyController().menu;
 		menu.enlacesProcesados += 1;
+		menu.writeConsole("Procesando Página: " + page.getWebURL().getURL()+ "   " + page.getWebURL().getPriority() + "\n");
 		if (page.getParseData() instanceof HtmlParseData && isUnderCondition(menu, page.getWebURL()) && visitLinkCondition(menu, page.getWebURL().getURL())
 				&& algorithms.pageContainsContent(page, menu.contains, menu.isAll, menu.isAtLeast, menu.isNone, menu) && isGeolocation(geoURL,menu,menu.geoBoundingBox[0],menu.geoBoundingBox[1],menu.geoBoundingBox[2],menu.geoBoundingBox[3],page)) {
 			menu.enlacesValidos += 1;
@@ -243,4 +208,55 @@ public class MyCrawler extends WebCrawler {
 		}
 		return ip.getHostAddress();
 	}
+	
+	public void applyPriority(WebURL url,Page referringPage, mainMenu menu)
+	{
+		url.setPriority((byte)3);
+		boolean found = false;
+		if (menu.dataPriority < 0 && algorithms.pageContainsContent(referringPage, menu.contains, menu.isAll,
+				menu.isAtLeast, menu.isNone, menu)) {
+			found = true;
+			if(menu.isPenalyze) {
+				url.setPriority((byte)(url.getPriority()+menu.dataPriority+url.getDepth()));				
+			}
+			else url.setPriority((byte)(url.getPriority()+menu.dataPriority));			}
+		
+		if (menu.linkPriority < 0 && isUnderCondition(menu, url)) {
+			found = true;
+			if(menu.isPenalyze) {
+				url.setPriority((byte)(url.getPriority()+menu.linkPriority+url.getDepth()));
+			}
+			else url.setPriority((byte)(url.getPriority()+menu.linkPriority));
+		}
+		if (!found) url.setPriority((byte)100);
+	}
+	
+	public boolean contieneTerminos(String url, String[] contiene){
+		for (int i = 0; i < contiene.length; ++i) {
+			if (url.contains(contiene[i])) return true;
+		}
+		return false;
+	}
+	
+	public boolean noContieneTerminos(String url, String[] noContiene){
+		for (int i = 0; i < noContiene.length; ++i) {
+			if (url.contains(noContiene[i]))
+				return false;
+		}
+		return true;
+	}
+	
+	
+	public boolean shouldVisitLink(WebURL url, mainMenu menu, Page referringPage){
+		String href = url.getURL().toLowerCase();
+		if(menu.isBroken){
+			if(url.getDepth() == 1 && !visitLinkCondition(menu, href)) return false;
+			if(url.getDepth() > 1 && !visitLinkCondition(menu,referringPage.getWebURL().getURL()) && visitLinkCondition(menu,referringPage.getWebURL().getParentUrl())) return false;
+		}
+		else{
+			if(!visitLinkCondition(menu, href)) return false;
+		}
+		return true;
+	}
+	
 }

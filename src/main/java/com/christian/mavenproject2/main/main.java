@@ -15,6 +15,11 @@
  */
 package com.christian.mavenproject2.main;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+
+import com.mysql.cj.api.jdbc.Statement;
+
 /**
  *
  * @author chris

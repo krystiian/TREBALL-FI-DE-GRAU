@@ -24,6 +24,9 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TreeMap;
@@ -62,6 +65,8 @@ import com.christian.mavenproject2.crawler.PageFetcher;
 import com.christian.mavenproject2.crawler.RobotstxtConfig;
 import com.christian.mavenproject2.crawler.RobotstxtServer;
 import com.christian.mavenproject2.extract_data.MyCrawler;
+import com.mysql.cj.api.jdbc.Statement;
+import com.mysql.cj.jdbc.PreparedStatement;
 
 /**
  *
@@ -82,6 +87,7 @@ public class mainMenu extends javax.swing.JFrame {
 	public int crawlers = 5;
 	public int profundidad = -1;
 	public int tiempo = 50;
+	public Connection con = null;
 	public float[] geoBoundingBox = {0,0,0,0};
 
 	public TimerTaskCalls periodFunction = new TimerTaskCalls();
@@ -90,19 +96,21 @@ public class mainMenu extends javax.swing.JFrame {
 	public Map<String, Object[]> data = new TreeMap<String, Object[]>();
 	public Map<String, Object[]> dataBroken = new TreeMap<String, Object[]>();
 
-	public String[] semilla;
-	public String[] contiene;
-	public String[] noContiene;
-	public String[] linkContainsValue;
-	public String[] linkNoContainsValue;
-	public String[] contains;
+	public String[] semilla = {};
+	public String[] contiene = {};
+	public String[] noContiene = {};
+	public String[] linkContainsValue = {};
+	public String[] linkNoContainsValue = {};
+	public String[] contains = {};
 	public String heatMap = "";
 	public String circleMap = "";
-	public String geoLanguage;
-	public String priority;
-	public String regex;
-	public String store;
-
+	public String geoLanguage= "";
+	public String priority = "";
+	public String regex = "";
+	public String store = "";
+	public int current_sesion;
+	
+	
 	public boolean isResumable = false;
 	public boolean isContiene = false;
 	public boolean isNoContiene = false;
@@ -129,9 +137,10 @@ public class mainMenu extends javax.swing.JFrame {
 	 * Creates new form mainMenu
 	 * 
 	 * @throws URISyntaxException
+	 * @throws SQLException 
 	 */
 
-	public mainMenu() throws URISyntaxException {
+	public mainMenu() throws URISyntaxException, SQLException {
 		initComponents();
 		menu.data.put("0", new Object[] { "URL", "LANGUAGE", "EMAILS", "GEOLOCATION"});
 		menu.dataBroken.put("0", new Object[] { "STATUS", "URL", "LINK" });
@@ -141,6 +150,14 @@ public class mainMenu extends javax.swing.JFrame {
 		DefaultCaret caret = (DefaultCaret) this.jTextArea2.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		jTextArea2.setEditable(false);
+		dbTest db = new dbTest();
+		try {
+			Connection con = db.main();
+			this.con = con;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 		// jProgressBar2.setMinimum(MY_MINIMUM);
 		// jProgressBar2.setMaximum(MY_MAXIMUM);
 		ToolTipManager.sharedInstance().setDismissDelay(20000);
@@ -320,7 +337,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 		jTextField1 = new JTextField();
 		jTextField1.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		jTextField1.setText("http://www.epickg.com");
+		jTextField1.setText("http://www.upf.edu");
 		jTextField1.setColumns(10);
 
 		lblCrawlers = new JLabel("Crawlers");
@@ -437,7 +454,6 @@ public class mainMenu extends javax.swing.JFrame {
 		lblAnalyse.setHorizontalAlignment(SwingConstants.CENTER);
 
 		jRadioButton7 = new JRadioButton();
-		jRadioButton7.setSelected(true);
 		jRadioButton7.setBackground(new Color(57, 83, 109));
 		jRadioButton7.setFont(new Font("Dialog", Font.BOLD, 12));
 		jRadioButton7.setForeground(new Color(240, 255, 255));
@@ -461,7 +477,6 @@ public class mainMenu extends javax.swing.JFrame {
 		jTextField7.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
 
 		jTextField6 = new JTextField();
-		jTextField6.setText("twitter facebook instagram");
 		jTextField6.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
 
 		jTextField4 = new JTextField();
@@ -521,7 +536,6 @@ public class mainMenu extends javax.swing.JFrame {
 				new String[] { "Link", "Data", "Equal priority", "Link over data", "Data over link" }));
 
 		rdbtnPriority = new JRadioButton("Priority");
-		rdbtnPriority.setSelected(true);
 		rdbtnPriority.setBackground(new Color(57, 83, 109));
 		rdbtnPriority.setToolTipText(
 				"<html>\r\n\r\nIndicamos con que orden se procesarán los enlaces insertados en la cola<br><br>\r\n\r\n<ol>\r\n<li><u>Link</u> Los enlaces que cumplan con las condiciones de URL se <br>procesarán antes</li><br>\r\n<li><u>Data</u> Los enlaces encontrados en una página que cumpla<br> las condiciones de DATA se procesarán antes</li><br>\r\n<li><u>Link over Data</u> ,ambas condiciones tienen prioridad, pero los enlaces que<br> cumplan la condicion de URL se procesara antes </li><br>\r\n<li><u>Data over Link</u> ,ambas condiciones tienen prioridad, pero los enlaces encontrados<br>en una página que cumpla la condición DATA se procesarán antes.</li><br><br><br>\r\n\r\nSi la <u>opcion no se selecciona</u>, se procesarán los enlaces en orden de entrada.\r\n\r\n</html>");
@@ -601,7 +615,6 @@ public class mainMenu extends javax.swing.JFrame {
 		radioButton_3.setFont(new Font("Dialog", Font.BOLD, 12));
 
 		bPenalyze = new JRadioButton("Penalyze D.");
-		bPenalyze.setSelected(true);
 		bPenalyze.setBorder(new LineBorder(new Color(0, 0, 0)));
 		bPenalyze.setBackground(new Color(57, 83, 109));
 		bPenalyze.setToolTipText(
@@ -989,56 +1002,16 @@ public class mainMenu extends javax.swing.JFrame {
 	private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jToggleButton1ActionPerformed
 		// TODO add your handling code here:
 		if (jToggleButton1.getText() == "START") {
-			/*
-			 * List<String> country = new ArrayList<String>(); String[] s = new
-			 * String[]{"afar", "abjasio", "avéstico", "afrikáans", "akano",
-			 * "amhárico", "aragonés", "árabe", "asamés", "avar", "aimara",
-			 * "azerí", "baskir", "bielorruso", "búlgaro", "bhoyapurí",
-			 * "bislama", "bambara", "bengalí", "tibetano", "bretón", "bosnio",
-			 * "catalán", "checheno", "chamorro", "corso", "cree", "checo",
-			 * "eslavo eclesiástico antiguo", "chuvasio", "galés", "danés",
-			 * "alemán", "maldivo", "dzongkha", "ewé", "griego", "inglés",
-			 * "esperanto", "español", "estonio", "euskera", "persa", "fula",
-			 * "finés", "fiyiano", "feroés", "francés", "frisón", "irlandés",
-			 * "gaélico escocés", "gallego", "guaraní", "guyaratí", "manés",
-			 * "hausa", "hebreo", "hindi", "hiri motu", "croata", "haitiano",
-			 * "húngaro", "armenio", "herero", "interlingua", "indonesio",
-			 * "occidental", "igbo", "yi de Sichuán", "iñupiaq", "ido",
-			 * "islandés", "italiano", "inuktitut", "japonés", "javanés",
-			 * "georgiano", "kongo", "kikuyu", "kuanyama", "kazajo",
-			 * "groenlandés", "camboyano", "canarés", "coreano", "kanuri",
-			 * "cachemiro", "kurdo", "komi", "córnico", "kirguís", "latín",
-			 * "luxemburgués", "luganda", "limburgués", "lingala", "lao",
-			 * "lituano", "luba-katanga", "letón", "malgache", "marshalés",
-			 * "maorí", "macedonio", "malayalam", "mongol", "maratí", "malayo",
-			 * "maltés", "birmano", "nauruano", "noruego bokmål",
-			 * "ndebele del norte", "nepalí", "ndonga", "neerlandés", "nynorsk",
-			 * "noruego", "ndebele del sur", "navajo", "chichewa", "occitano",
-			 * "ojibwa", "oromo", "oriya", "osético", "panyabí", "pali",
-			 * "polaco", "pastú", "portugués", "quechua", "romanche", "kirundi",
-			 * "rumano", "ruso", "ruandés", "sánscrito", "sardo", "sindhi",
-			 * "sami septentrional", "sango", "cingalés", "eslovaco",
-			 * "esloveno", "samoano", "shona", "somalí", "albanés", "serbio",
-			 * "suazi", "sesotho", "sundanés", "sueco", "suajili", "tamil",
-			 * "télugu", "tayiko", "tailandés", "tigriña", "turcomano",
-			 * "tagalo", "setsuana", "tongano", "turco", "tsonga", "tártaro",
-			 * "twi", "tahitiano", "uigur", "ucraniano", "urdu", "uzbeko",
-			 * "venda", "vietnamita", "volapük", "valón", "wolof", "xhosa",
-			 * "yídish", "yoruba", "chuan", "chino", "zulú"}; for(int i = 0; i <
-			 * s.length; ++i) { country.add(s[i]); }
-			 * java.util.Collections.sort(country); for(int i =0; i <
-			 * country.size(); ++i) System.out.println(country.get(i));
-			 */
 			jTabbedPane1.setSelectedIndex(1);
 			if (validateParams()) {
-				Timer timer = new Timer();
-				periodFunction = new TimerTaskCalls();
-				timer.scheduleAtFixedRate(periodFunction, 0, 5000);
+				insertSesion();
+				setCurrentSesionValue();
+				updateFields();
 				Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 					@Override
 					public void run() {
 						controller.shutdown();
-						timer.cancel();
+						updateEndTime();
 						if (menu.isStore) {
 							try {
 								Thread.sleep(10000);
@@ -1763,7 +1736,12 @@ public class mainMenu extends javax.swing.JFrame {
 			@Override
 			public void run() {
 				try {
-					new mainMenu().setVisible(true);
+					try {
+						new mainMenu().setVisible(true);
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				} catch (URISyntaxException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -1861,7 +1839,7 @@ public class mainMenu extends javax.swing.JFrame {
 			open(uri);
 		}
 	}
-
+	
 	private static void open(URI uri) {
 		if (Desktop.isDesktopSupported()) {
 			try {
@@ -1874,6 +1852,94 @@ public class mainMenu extends javax.swing.JFrame {
 
 	public void setTextStats(String s) {
 		jTextField10.setText(s);
+	}
+	
+	
+	
+	//DATABASE FUNCTION
+	public void insertSesion()
+	{
+		try {
+			Statement stmt = (Statement) con.createStatement();
+			String new_sesion = "INSERT INTO crawler_sesion(numero_crawlers,profundidad,tiempo,visita_no_contiene,visita_contiene,tiene_prioridad,tiene_penalizacion,data_at_least_one,data_none,data_all,url_no_contiene,url_si_contiene,url_regex,resumable,geo_bounding_box_area,geo_language,storage_excel,fecha_inicio,extract_emails,extract_geolocation,extract_broken,extract_language)"
+					+ "VALUES("+this.crawlers+","+this.profundidad+","+this.tiempo+","+this.linkIsContains+","+this.linkIsNoContains+","+this.isPriority+","+this.isPenalyze+","+this.isAtLeast+","+this.isNone+","+this.isAll+","+this.isNoContiene+","+this.isContiene+","+this.isRegex+","+this.isResumable+","+this.isGeoBoundingBox+","+this.isGeoLanguage+","+this.isStore+",'"+new java.sql.Timestamp(System.currentTimeMillis())+"',"+this.isEmails+","+this.fetchGeolocation+","+this.isBroken+","+this.isIdioma+");";		
+			stmt.executeUpdate(new_sesion);
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	
+	public void setCurrentSesionValue()
+	{
+		try {
+			String last_sesion = "SELECT id_sesion from crawler_sesion ORDER BY id_sesion DESC LIMIT 1;";
+			PreparedStatement stmt = (PreparedStatement) con.prepareStatement(last_sesion);
+			ResultSet resultSet = stmt.executeQuery();
+			resultSet.next();
+			this.current_sesion = resultSet.getInt("id_sesion");
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	public void updateEndTime()
+	{
+		try {
+			Statement stmt = (Statement) con.createStatement();
+			String update_time = "UPDATE crawler_sesion\r\n" + "SET crawler_sesion.fecha_final ='"+new java.sql.Timestamp(System.currentTimeMillis())+"' where id_sesion = (SELECT id_sesion from (SELECT * FROM crawler_sesion) AS temp ORDER BY id_sesion DESC LIMIT 1);";
+			stmt.executeUpdate(update_time);
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	
+	public void updateFields()
+	{
+		try {
+			Statement stmt = (Statement) con.createStatement();
+			
+			//SEMILLA
+			String s = "INSERT INTO campos(categoria,valor,id_sesion)VALUES";
+			for(int i = 0; i < this.semilla.length; ++i){
+				s += "('seed','"+this.semilla[i]+"'," + this.current_sesion+"),";
+			}
+			
+			for(int i = 0; i < this.contains.length; ++i){
+				s += "('data_contiene','"+this.contains[i]+"'," + this.current_sesion+"),";
+			}
+			
+			for(int i = 0; i < this.contiene.length; ++i){
+				s += "('url_contiene','"+this.contiene[i]+"'," + this.current_sesion+"),";
+			}
+			
+			for(int i = 0; i < this.contiene.length; ++i){
+				s += "('url_no_contiene','"+this.noContiene[i]+"'," + this.current_sesion+"),";
+			}
+			
+			if(!this.regex.isEmpty()) s += "('url_regEx','"+this.regex+"'," + this.current_sesion+"),";
+			
+			for(int i = 0; i < this.linkContainsValue.length; ++i){
+				s += "('visita_contiene','"+this.linkContainsValue[i]+"'," + this.current_sesion+"),";
+			}
+			
+			for(int i = 0; i < this.linkNoContainsValue.length; ++i){
+				s += "('visita_no_contiene','"+this.linkNoContainsValue[i]+"'," + this.current_sesion+"),";
+			}
+			
+			if(this.isPriority) s += "('prioridad','"+this.priority+"'," + this.current_sesion+"),";
+			if(this.isGeoBoundingBox) s += "('bounding_box','["+this.geoBoundingBox[0]+","+this.geoBoundingBox[1]+","+this.geoBoundingBox[2]+","+this.geoBoundingBox[3]+"]'," + this.current_sesion+"),";
+			if(this.isGeoLanguage) s += "('geo_language','"+this.geoLanguage+"'," + this.current_sesion+"),";
+			if(this.isStore) s += "('storage_filename','"+this.store+"'," + this.current_sesion+"),";
+			s = s.substring(0, s.length()-1)+";";
+			stmt.executeUpdate(s);
+		
+		
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 	private javax.swing.JLabel jLabel8;

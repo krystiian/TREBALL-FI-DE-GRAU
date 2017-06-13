@@ -450,7 +450,6 @@ public class mainMenu extends javax.swing.JFrame {
 		jLabel8.setToolTipText(
 				"<html>\r\n\r\nSolo serán válidos aquellos enlaces que su contenido cumpla con la condición escogida.<br><br>\r\n\r\n</html>");
 		jRadioButton11 = new javax.swing.JRadioButton();
-		jRadioButton11.setSelected(true);
 		jRadioButton11.setBackground(new Color(57, 83, 109));
 		jRadioButton11.setFont(new Font("Dialog", Font.BOLD, 12));
 		jRadioButton11.setForeground(new Color(240, 255, 255));
@@ -472,7 +471,6 @@ public class mainMenu extends javax.swing.JFrame {
 		jRadioButton10.setToolTipText(
 				"<html>\r\n\r\nSe extraeran todos los enlaces caidos de las páginas que cumplan la condicion URL<br><br>\r\n\r\nLos resultados se guardarán en {filename}_errores.xlsx\r\n\r\n</html>");
 		jRadioButton10.setHorizontalAlignment(SwingConstants.LEFT);
-		jRadioButton10.setSelected(true);
 
 		jRadioButton10.setText("Broken Links");
 		jRadioButton10.addActionListener(new java.awt.event.ActionListener() {
@@ -483,7 +481,6 @@ public class mainMenu extends javax.swing.JFrame {
 		});
 
 		rdbtnGeolocation = new JRadioButton("Geolocation");
-		rdbtnGeolocation.setSelected(true);
 		rdbtnGeolocation.setBorder(new EmptyBorder(0, 0, 0, 0));
 		rdbtnGeolocation.setBackground(new Color(57, 83, 109));
 		rdbtnGeolocation.setFont(new Font("Dialog", Font.BOLD, 12));
@@ -492,7 +489,6 @@ public class mainMenu extends javax.swing.JFrame {
 				"<html>\r\n\r\nSe extraerá la información siguiente del servidor donde está\r\n<br>localizada la página de interés<br>\r\n\r\n<ul>\r\n<li>Pais</li>\r\n<li>Ciudad</li>\r\n<li>Latitud | Longitud</li>\r\n</ul>\r\n\r\n</html>");
 		rdbtnGeolocation.setHorizontalAlignment(SwingConstants.CENTER);
 		jRadioButton4 = new javax.swing.JRadioButton();
-		jRadioButton4.setSelected(true);
 		jRadioButton4.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		jRadioButton4.setBackground(new Color(57, 83, 109));
 		jRadioButton4.setFont(new Font("Dialog", Font.BOLD, 12));
@@ -503,7 +499,6 @@ public class mainMenu extends javax.swing.JFrame {
 		jRadioButton4.setToolTipText(
 				"<html>\r\nExtraerá en que idioma se encuentra la web,<br>basandose en la primera condición que encuentre.<br>\r\n\r\n<ol>\r\n<li>Buscará si existe algún tag que indique el idioma (MUY FIABLE)</li>\r\n<li>Buscará si contiene algún párrafo y lo analizará (FIABLE)</li>\r\n<li>Buscará el título de la página y lo analizará (POCO FIAFLE)</li>\r\n</ol>\r\n</html>\r\n");
 		jRadioButton5 = new javax.swing.JRadioButton();
-		jRadioButton5.setSelected(true);
 		jRadioButton5.setBorder(null);
 		jRadioButton5.setBackground(new Color(57, 83, 109));
 		jRadioButton5.setFont(new Font("Dialog", Font.BOLD, 12));
@@ -523,7 +518,6 @@ public class mainMenu extends javax.swing.JFrame {
 
 		jTextField1 = new JTextField();
 		jTextField1.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		jTextField1.setText("http://www.tecnonews.info");
 		jTextField1.setColumns(10);
 
 		lblCrawlers = new JLabel("Crawlers");
@@ -622,10 +616,8 @@ public class mainMenu extends javax.swing.JFrame {
 		});
 		jTextField8 = new javax.swing.JTextField();
 		jTextField8.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		jTextField8.setText("nombre_fichero");
 
 		linkNoContains = new JTextField();
-		linkNoContains.setText("twitter facebook instagram youtube");
 		linkNoContains.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		linkNoContains.setColumns(10);
 
@@ -786,7 +778,6 @@ public class mainMenu extends javax.swing.JFrame {
 		label_1.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 24));
 
 		radioButton_2 = new JRadioButton("Not contains");
-		radioButton_2.setSelected(true);
 		radioButton_2.setBackground(new Color(57, 83, 109));
 		radioButton_2.setToolTipText(
 				"<html>\r\n\r\nIndicar los términos que queremos excluir de páginas que visitar.<br><br>\r\n\r\nNo Contains: <i>twitter</i><br><br>\r\n\r\nEvitaremos todos los enlaces que contengan Twitter en la URL. <br><br>\r\n\r\n<i> Si iniciamos un crawling con esta condición y la página seed<br>únicamente contiene enlaces con el término twitter, la ejecución finaliza.\r\n\r\n</html>");

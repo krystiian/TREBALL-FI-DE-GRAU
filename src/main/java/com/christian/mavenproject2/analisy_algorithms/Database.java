@@ -15,7 +15,7 @@ public class Database {
 	public static Connection conn = null;
 	public static String url = "jdbc:mysql://localhost:3306/";
 	public static String dbName= "dbTFG";
-	public static String properties = "?createDatabaseIfNotExist=true";
+	public static String properties = "?createDatabaseIfNotExist=true&serverTimezone=UTC";
 	public static String driver ="com.mysql.cj.jdbc.Driver";
 	
 	public static Connection main(String args[]) throws Exception

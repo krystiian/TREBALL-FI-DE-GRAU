@@ -18,6 +18,7 @@
 package com.christian.mavenproject2.crawler;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -385,6 +386,7 @@ public class WebCrawler implements Runnable {
 			Page page = new Page(curURL);
 			page.setFetchResponseHeaders(fetchResult.getResponseHeaders());
 			mainMenu menu = getMyController().menu;
+			menu.lastAction = Instant.now().toEpochMilli();
 			page.setStatusCode(statusCode);
 			if (statusCode < 200 || statusCode > 299) { // Not 2XX: 2XX status
 														// codes indicate
@@ -404,7 +406,7 @@ public class WebCrawler implements Runnable {
 							menu.enlacesCaidos += 1;
 							menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
 									+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
-									+ menu.enlacesCaidos + " CAIDOS");
+									+ menu.enlacesCaidos + " CAIDOS  |  " + menu.emailtTotales + " EMAILS");
 							menu.writeConsole(curURL.getParentUrl() + "\nHAS A BROKEN LINK: " + curURL.getURL()
 									+ "\nCODE: " + fetchResult.getStatusCode() + "\n\n");
 							menu.dataBroken.put(menu.enlacesCaidos + 1 + "",
@@ -456,7 +458,7 @@ public class WebCrawler implements Runnable {
 						menu.enlacesCaidos += 1;
 						menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
 								+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
-								+ menu.enlacesCaidos + " CAIDOS");
+								+ menu.enlacesCaidos + " CAIDOS  |  " + menu.emailtTotales + " EMAILS");
 						menu.writeConsole(curURL.getParentUrl() + "\nHAS A BROKEN LINK: " + curURL.getURL() + "\nCODE: "
 								+ fetchResult.getStatusCode() + "\n\n");
 						menu.dataBroken.put(menu.enlacesCaidos + 1 + "",

@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -41,6 +42,7 @@ public class MyCrawler extends WebCrawler {
 	@Override
 	public boolean shouldVisit(Page referringPage, WebURL url) {
 		mainMenu menu = this.getMyController().menu;
+		menu.lastAction = Instant.now().toEpochMilli();
 		menu.enlacesTotales += 1;
 		if(url.getDepth() == 0) {
 			menu.enlacesAceptados += 1;
@@ -48,13 +50,11 @@ public class MyCrawler extends WebCrawler {
 		}
 		menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
 				+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
-				+ menu.enlacesCaidos + " CAIDOS");
+				+ menu.enlacesCaidos + " CAIDOS  |  " + menu.emailtTotales + " EMAILS");
 		String href = url.getURL().toLowerCase();
-		/*if (FILTERS.matcher(href).matches())
-			return false;*/
-		
-		//if ((menu.linkIsContains || menu.linkIsNoContains) && !visitLinkCondition(menu, href)) return false;	
-		
+		if (FILTERS.matcher(href).matches())
+			return false;
+				
 		if(menu.linkIsContains || menu.linkIsNoContains) if(!shouldVisitLink(url, menu, referringPage)) return false;
 		if(menu.isPriority) applyPriority(url, referringPage, menu);
 		menu.enlacesAceptados += 1;
@@ -70,13 +70,15 @@ public class MyCrawler extends WebCrawler {
 		WebURL webURL = page.getWebURL();
 		String geoURL = webURL.getSubDomain()+"."+webURL.getDomain();
 		mainMenu menu = this.getMyController().menu;
+		menu.lastAction = Instant.now().toEpochMilli();
 		menu.enlacesProcesados += 1;
 		if (page.getParseData() instanceof HtmlParseData && isUnderCondition(menu, page.getWebURL()) && visitLinkCondition(menu, page.getWebURL().getURL())
-				&& algorithms.pageContainsContent(page, menu.contains, menu.isAll, menu.isAtLeast, menu.isNone, menu) && isGeolocation(geoURL,menu,menu.geoBoundingBox[0],menu.geoBoundingBox[1],menu.geoBoundingBox[2],menu.geoBoundingBox[3],page)) {
+				&& algorithms.pageContainsContent(page, menu.contains, menu.isAll, menu.isAtLeast, menu.isNone, menu) 
+				&& isGeolocation(geoURL,menu,menu.geoBoundingBox[0],menu.geoBoundingBox[1],menu.geoBoundingBox[2],menu.geoBoundingBox[3],page)) {
 			menu.enlacesValidos += 1;
 			menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
 					+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
-					+ menu.enlacesCaidos + " CAIDOS");
+					+ menu.enlacesCaidos + " CAIDOS  |  " + menu.emailtTotales + " EMAILS");
 			menu.writeConsole(tiempoEjecucion(page, menu));
 		}
 	}
@@ -168,6 +170,10 @@ public class MyCrawler extends WebCrawler {
 		if (menu.isEmails) {
 			emailList = algorithms.detectEmails(p);
 			email = algorithms.getAllEmails(emailList, menu);
+			menu.emailtTotales += emailList.size();
+			menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
+					+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
+					+ menu.enlacesCaidos + " CAIDOS  |  " + menu.emailtTotales + " EMAILS");
 			if (!email.isEmpty())
 				s += "EMAIL: " + email + "\n";
 		}

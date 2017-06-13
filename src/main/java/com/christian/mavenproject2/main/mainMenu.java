@@ -18,6 +18,7 @@ package com.christian.mavenproject2.main;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,10 +27,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TreeMap;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -58,6 +63,7 @@ import javax.swing.text.DefaultCaret;
 import com.christian.mavenproject2.analisy_algorithms.CreateMaps;
 import com.christian.mavenproject2.analisy_algorithms.MyAlgorithms;
 import com.christian.mavenproject2.analisy_algorithms.MyExcel;
+import com.christian.mavenproject2.analisy_algorithms.lastAction;
 import com.christian.mavenproject2.analisy_algorithms.Database;
 import com.christian.mavenproject2.crawler.CrawlConfig;
 import com.christian.mavenproject2.crawler.CrawlController;
@@ -67,6 +73,18 @@ import com.christian.mavenproject2.crawler.RobotstxtServer;
 import com.christian.mavenproject2.extract_data.MyCrawler;
 import com.mysql.cj.api.jdbc.Statement;
 import com.mysql.cj.jdbc.PreparedStatement;
+import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import java.awt.SystemColor;
 
 /**
  *
@@ -77,6 +95,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 	public mainMenu menu = this;
 	public int enlacesTotales = 0; // OBTENIDOS
+	public int emailtTotales = 0; // OBTENIDOS
 	public int enlacesAceptados = 0; // ENLACES CUMPLEN CON LO PEDIDO
 	public int enlacesCaidos = 0; // ENLACES CON ERROR
 	public int enlacesProcesados = 0; // ENLACES GUARDADOS EN LA BBDD
@@ -87,7 +106,10 @@ public class mainMenu extends javax.swing.JFrame {
 	public int crawlers = 5;
 	public int profundidad = -1;
 	public int tiempo = 50;
+	public long lastAction = 0;
+	public String loadedSesion = null;
 	public Connection con = null;
+	public Connection viewCon = null;
 	public float[] geoBoundingBox = {0,0,0,0};
 
 	public static Pattern filenameRegex = Pattern.compile("[_a-zA-Z0-9\\-\\.]+");
@@ -148,12 +170,179 @@ public class mainMenu extends javax.swing.JFrame {
 		menu.dataBroken.put("0", new Object[] { "STATUS", "URL", "LINK" });
 		menu.setTextStats(menu.enlacesTotales + " ENLACES  |  " + menu.enlacesAceptados + " ACEPTADOS  |  "
 				+ menu.enlacesProcesados + " PROCESADOS  |  " + menu.enlacesValidos + " VÁLIDOS  |  "
-				+ menu.enlacesCaidos + " CAIDOS");
+				+ menu.enlacesCaidos + " CAIDOS  |  " + menu.emailtTotales + " EMAILS");
 		DefaultCaret caret = (DefaultCaret) this.jTextArea2.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		jTextArea2.setEditable(false);		
-		// jProgressBar2.setMinimum(MY_MINIMUM);
-		// jProgressBar2.setMaximum(MY_MAXIMUM);
+		
+		JLayeredPane layeredPane = new JLayeredPane();
+		layeredPane.setBackground(new Color(57, 83, 109));
+		layeredPane.setVisible(false);
+		jTabbedPane1.addTab("RESULTS", null, layeredPane, null);
+		
+		scrollPane = new JScrollPane();
+		scrollPane.setRequestFocusEnabled(false);
+		scrollPane.setPreferredSize(new Dimension(58, 2));
+		scrollPane.setMinimumSize(new Dimension(500, 500));
+		scrollPane.setBounds(10, 120, 786, 395);
+		layeredPane.add(scrollPane);
+		
+		table = new JTable();
+		scrollPane.setViewportView(table);
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+		comboBox = new JComboBox();
+		comboBox.setForeground(new Color(57, 83, 109));
+		comboBox.setBackground(SystemColor.inactiveCaption);
+		comboBox.setEnabled(false);
+		comboBox.setBounds(616, 8, 54, 20);
+		layeredPane.add(comboBox);
+		
+		btnNewButton = new JButton("LOAD SESION");
+		btnNewButton.setForeground(new Color(57, 83, 109));
+		btnNewButton.setBackground(SystemColor.inactiveCaption);
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				menu.loadedSesion = (String) menu.comboBox.getSelectedItem();
+				if(menu.loadedSesion.equals("ALL")) menu.label_2.setText("ALL SESIONS LOADED");
+				else menu.label_2.setText("SESION " + menu.loadedSesion + " LOADED");
+				menu.label_2.setVisible(true);
+				VisibleViewButtons();
+		        btnUrl.setEnabled(true);
+			}
+		});
+		btnNewButton.setEnabled(false);
+		btnNewButton.setBounds(680, 7, 116, 23);
+		layeredPane.add(btnNewButton);
+		
+		txtyy_1 = new JTextField();
+		txtyy_1.setBounds(153, 39, 86, 20);
+		layeredPane.add(txtyy_1);
+		txtyy_1.setColumns(10);
+		
+		txtRoot_1 = new JTextField();
+		txtRoot_1.setBounds(153, 8, 86, 20);
+		layeredPane.add(txtRoot_1);
+		txtRoot_1.setColumns(10);
+		
+		JButton btnLoadDatabase = new JButton("LOAD DATABASE");
+		btnLoadDatabase.setForeground(new Color(57, 83, 109));
+		btnLoadDatabase.setBackground(SystemColor.inactiveCaption);
+		btnLoadDatabase.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					String[] values = {getViewUsername(),getViewPassword()};
+					Connection con = Database.main(values);
+					menu.viewCon = con;
+					lblDbLoadedSuccesfuly.setVisible(true);
+					fillViewSesions();
+					new java.util.Timer().schedule( 
+					        new java.util.TimerTask() {
+					            @Override
+					            public void run() {
+					            	lblDbLoadedSuccesfuly.setVisible(false);
+					            }
+					        }, 
+					        5000 
+					);
+					
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					menu.writeConsole("The Username or Password introduced for DB is not correct.\n");
+					jTabbedPane1.setSelectedIndex(1);
+					e.printStackTrace();
+				}
+			}
+		});
+		btnLoadDatabase.setBounds(10, 21, 133, 23);
+		layeredPane.add(btnLoadDatabase);
+		
+		btnEmails = new JButton("EMAILS");
+		btnEmails.setForeground(new Color(57, 83, 109));
+		btnEmails.setBackground(SystemColor.inactiveCaption);
+		btnEmails.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(menu.loadedSesion.equals("ALL"))
+					{
+						menu.writeConsole("ENTRO IF\n");
+						populate(3);
+					}
+				else{
+					menu.writeConsole("ENTRO ELSE\n");
+					populate(4);
+				}
+			}
+		});
+		btnEmails.setEnabled(false);
+		btnEmails.setBounds(164, 86, 89, 23);
+		layeredPane.add(btnEmails);
+		
+		btnNewButton_2 = new JButton("GEOLOCATION");
+		btnNewButton_2.setForeground(new Color(57, 83, 109));
+		btnNewButton_2.setBackground(SystemColor.inactiveCaption);
+		btnNewButton_2.setEnabled(false);
+		btnNewButton_2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(menu.loadedSesion.equals("ALL")) populate(7);
+				else populate(8);
+			}
+		});
+		btnNewButton_2.setBounds(492, 86, 137, 23);
+		layeredPane.add(btnNewButton_2);
+		
+		btnLanguage = new JButton("LANGUAGE");
+		btnLanguage.setForeground(new Color(57, 83, 109));
+		btnLanguage.setBackground(SystemColor.inactiveCaption);
+		btnLanguage.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(menu.loadedSesion.equals("ALL")) populate(5);
+				else populate(6);
+			}
+		});
+		btnLanguage.setEnabled(false);
+		btnLanguage.setBounds(321, 86, 116, 23);
+		layeredPane.add(btnLanguage);
+		
+		btnBrokenUrl = new JButton("BROKEN URL");
+		btnBrokenUrl.setForeground(new Color(57, 83, 109));
+		btnBrokenUrl.setBackground(SystemColor.inactiveCaption);
+		btnBrokenUrl.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(menu.loadedSesion.equals("ALL")) populate(9);
+				else populate(10);
+			}
+		});
+		btnBrokenUrl.setEnabled(false);
+		btnBrokenUrl.setBounds(680, 86, 116, 23);
+		layeredPane.add(btnBrokenUrl);
+		
+		lblDbLoadedSuccesfuly = new JLabel("DB LOADED SUCCESFULLY");
+		lblDbLoadedSuccesfuly.setForeground(new Color(0, 102, 0));
+		lblDbLoadedSuccesfuly.setVisible(false);
+		lblDbLoadedSuccesfuly.setFont(new Font("Tahoma", Font.BOLD, 10));
+		lblDbLoadedSuccesfuly.setBounds(250, 25, 173, 14);
+		layeredPane.add(lblDbLoadedSuccesfuly);
+		
+		label_2 = new JLabel("");
+		label_2.setHorizontalAlignment(SwingConstants.CENTER);
+		label_2.setFont(new Font("Tahoma", Font.BOLD, 12));
+		label_2.setBounds(614, 39, 182, 20);
+		label_2.setForeground(new Color(0, 102, 0));
+		label_2.setVisible(false);
+		layeredPane.add(label_2);
+		
+		btnUrl = new JButton("URL");
+		btnUrl.setForeground(new Color(57, 83, 109));
+		btnUrl.setBackground(SystemColor.inactiveCaption);
+		btnUrl.setEnabled(false);
+		btnUrl.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(menu.loadedSesion.equals("ALL")) populate(1);
+				else populate(2);
+			}
+		});
+		btnUrl.setBounds(10, 86, 89, 23);
+		layeredPane.add(btnUrl);		
 		ToolTipManager.sharedInstance().setDismissDelay(20000);
 	}
 
@@ -294,6 +483,7 @@ public class mainMenu extends javax.swing.JFrame {
 		});
 
 		rdbtnGeolocation = new JRadioButton("Geolocation");
+		rdbtnGeolocation.setSelected(true);
 		rdbtnGeolocation.setBorder(new EmptyBorder(0, 0, 0, 0));
 		rdbtnGeolocation.setBackground(new Color(57, 83, 109));
 		rdbtnGeolocation.setFont(new Font("Dialog", Font.BOLD, 12));
@@ -302,6 +492,7 @@ public class mainMenu extends javax.swing.JFrame {
 				"<html>\r\n\r\nSe extraerá la información siguiente del servidor donde está\r\n<br>localizada la página de interés<br>\r\n\r\n<ul>\r\n<li>Pais</li>\r\n<li>Ciudad</li>\r\n<li>Latitud | Longitud</li>\r\n</ul>\r\n\r\n</html>");
 		rdbtnGeolocation.setHorizontalAlignment(SwingConstants.CENTER);
 		jRadioButton4 = new javax.swing.JRadioButton();
+		jRadioButton4.setSelected(true);
 		jRadioButton4.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
 		jRadioButton4.setBackground(new Color(57, 83, 109));
 		jRadioButton4.setFont(new Font("Dialog", Font.BOLD, 12));
@@ -312,6 +503,7 @@ public class mainMenu extends javax.swing.JFrame {
 		jRadioButton4.setToolTipText(
 				"<html>\r\nExtraerá en que idioma se encuentra la web,<br>basandose en la primera condición que encuentre.<br>\r\n\r\n<ol>\r\n<li>Buscará si existe algún tag que indique el idioma (MUY FIABLE)</li>\r\n<li>Buscará si contiene algún párrafo y lo analizará (FIABLE)</li>\r\n<li>Buscará el título de la página y lo analizará (POCO FIAFLE)</li>\r\n</ol>\r\n</html>\r\n");
 		jRadioButton5 = new javax.swing.JRadioButton();
+		jRadioButton5.setSelected(true);
 		jRadioButton5.setBorder(null);
 		jRadioButton5.setBackground(new Color(57, 83, 109));
 		jRadioButton5.setFont(new Font("Dialog", Font.BOLD, 12));
@@ -331,7 +523,7 @@ public class mainMenu extends javax.swing.JFrame {
 
 		jTextField1 = new JTextField();
 		jTextField1.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		jTextField1.setText("http://www.upf.edu");
+		jTextField1.setText("http://www.tecnonews.info");
 		jTextField1.setColumns(10);
 
 		lblCrawlers = new JLabel("Crawlers");
@@ -430,9 +622,10 @@ public class mainMenu extends javax.swing.JFrame {
 		});
 		jTextField8 = new javax.swing.JTextField();
 		jTextField8.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		jTextField8.setText("archivo_salida");
+		jTextField8.setText("nombre_fichero");
 
 		linkNoContains = new JTextField();
+		linkNoContains.setText("twitter facebook instagram youtube");
 		linkNoContains.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		linkNoContains.setColumns(10);
 
@@ -593,6 +786,7 @@ public class mainMenu extends javax.swing.JFrame {
 		label_1.setFont(new Font("Tahoma", Font.BOLD | Font.ITALIC, 24));
 
 		radioButton_2 = new JRadioButton("Not contains");
+		radioButton_2.setSelected(true);
 		radioButton_2.setBackground(new Color(57, 83, 109));
 		radioButton_2.setToolTipText(
 				"<html>\r\n\r\nIndicar los términos que queremos excluir de páginas que visitar.<br><br>\r\n\r\nNo Contains: <i>twitter</i><br><br>\r\n\r\nEvitaremos todos los enlaces que contengan Twitter en la URL. <br><br>\r\n\r\n<i> Si iniciamos un crawling con esta condición y la página seed<br>únicamente contiene enlaces con el término twitter, la ejecución finaliza.\r\n\r\n</html>");
@@ -618,18 +812,15 @@ public class mainMenu extends javax.swing.JFrame {
 		
 		rdbtnDb = new JRadioButton("DB");
 		rdbtnDb.setHorizontalAlignment(SwingConstants.RIGHT);
-		rdbtnDb.setSelected(true);
 		rdbtnDb.setFont(new Font("Dialog", Font.BOLD, 12));
 		rdbtnDb.setBorder(new LineBorder(new Color(0, 0, 0)));
 		rdbtnDb.setForeground(new Color(240, 255, 255));
 		rdbtnDb.setBackground(new Color(57, 83, 109));
 		
 		txtRoot = new JTextField();
-		txtRoot.setText("root");
 		txtRoot.setColumns(10);
 		
 		txtyy = new JTextField();
-		txtyy.setText("900123yy");
 		txtyy.setColumns(10);
 		GroupLayout gl_jLayeredPane2 = new GroupLayout(jLayeredPane2);
 		gl_jLayeredPane2.setHorizontalGroup(
@@ -875,10 +1066,14 @@ public class mainMenu extends javax.swing.JFrame {
 		jTabbedPane1.addTab("CONSOLE", jLayeredPane5);
 
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-		layout.setHorizontalGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(jTabbedPane1,
-				GroupLayout.PREFERRED_SIZE, 811, Short.MAX_VALUE));
-		layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING).addComponent(jTabbedPane1,
-				GroupLayout.DEFAULT_SIZE, 554, Short.MAX_VALUE));
+		layout.setHorizontalGroup(
+			layout.createParallelGroup(Alignment.LEADING)
+				.addComponent(jTabbedPane1, GroupLayout.PREFERRED_SIZE, 811, Short.MAX_VALUE)
+		);
+		layout.setVerticalGroup(
+			layout.createParallelGroup(Alignment.LEADING)
+				.addComponent(jTabbedPane1, GroupLayout.DEFAULT_SIZE, 554, Short.MAX_VALUE)
+		);
 		getContentPane().setLayout(layout);
 		pack();
 	}// </editor-fold>//GEN-END:initComponents
@@ -929,10 +1124,14 @@ public class mainMenu extends javax.swing.JFrame {
 						updateFields();
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
-						menu.writeConsole("The Username or Password introduced for DB is not correct.");
+						menu.writeConsole("The Username or Password introduced for DB is not correct.\n");
+						jTabbedPane1.setSelectedIndex(1);
 						e.printStackTrace();
 					}
 				}
+			    Timer timer = new Timer();
+			    timer.schedule(new lastAction(menu), 0, 30000);
+			    
 				Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 					@Override
 					public void run() {
@@ -948,9 +1147,11 @@ public class mainMenu extends javax.swing.JFrame {
 									MyExcel excelErrors = new MyExcel();
 									excelErrors.importToExcel(menu.store + "_error.xlsx", dataBroken);
 								}
-								cm.createHeatMap(menu.heatMap, menu.store);
-								cm.createCircleMap(menu.circleMap, menu.store);
-							} catch (InterruptedException e) {
+								if(menu.fetchGeolocation) {
+									cm.createHeatMap(menu.heatMap, menu.store);
+									cm.createCircleMap(menu.circleMap, menu.store);
+								}
+							}catch (InterruptedException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
@@ -1282,6 +1483,14 @@ public class mainMenu extends javax.swing.JFrame {
 
 	public Boolean getIsDbStore() {
 		return this.rdbtnDb.isSelected();
+	}
+	
+	public String getViewUsername() {
+		return this.txtRoot_1.getText();
+	}
+	
+	public String getViewPassword() {
+		return this.txtyy_1.getText();
 	}
 	
 	public void writeConsole(String s) {
@@ -1673,6 +1882,121 @@ public class mainMenu extends javax.swing.JFrame {
 		setIsEmails(getIsEmails());
 	}
 
+	public void fillViewSesions()
+	{
+		try {
+			String sesions = "SELECT id_sesion from crawler_sesion;";
+			Statement stmt = (Statement) menu.viewCon.createStatement();
+	        ResultSet rs = stmt.executeQuery(sesions);
+	        List<String> ls = new ArrayList<String>();
+	        ls.add("ALL");
+	        while (rs.next()) {
+	            ls.add(rs.getInt("id_sesion")+"");
+	        }
+	        comboBox.setModel(new DefaultComboBoxModel(ls.toArray()));
+			comboBox.setEnabled(true);
+			btnNewButton.setEnabled(true);
+		}catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	
+	
+	public void VisibleViewButtons()
+	{
+		Statement stmt = null;
+		ResultSet rs = null;
+		String query = "";
+		if(menu.loadedSesion.equals("ALL")){
+			try {				
+
+				//EMAILS
+				query = "SELECT count(extract_emails) from crawler_sesion where extract_emails = 1;";
+				stmt = (Statement) menu.viewCon.createStatement();
+		        rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	if(rs.getInt("count(extract_emails)") > 0) btnEmails.setEnabled(true);
+		        	else btnEmails.setEnabled(false);
+		        }
+		        //LANGUAGE
+				query = "SELECT count(extract_language) from crawler_sesion where extract_language = 1;";
+				stmt = (Statement) menu.viewCon.createStatement();
+		        rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	if(rs.getInt("count(extract_language)") > 0) btnLanguage.setEnabled(true);
+		        	else btnLanguage.setEnabled(false);
+		        }
+		        
+		        //GEOLOCATION
+				query = "SELECT count(extract_geolocation) from crawler_sesion where extract_geolocation = 1;";
+				stmt = (Statement) menu.viewCon.createStatement();
+		        rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	if(rs.getInt("count(extract_geolocation)") > 0) btnNewButton_2.setEnabled(true);
+		        	else btnNewButton_2.setEnabled(false);
+		        }
+		        
+		        //BROKEN URL
+				query = "SELECT count(extract_broken) from crawler_sesion where extract_broken = 1;";
+				stmt = (Statement) menu.viewCon.createStatement();
+		        rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	if(rs.getInt("count(extract_broken)") > 0) btnBrokenUrl.setEnabled(true);
+		        	else btnBrokenUrl.setEnabled(false);
+		        }
+		        
+			}catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		else{
+			try {				
+				//EMAILS	
+				query = "SELECT extract_emails from crawler_sesion where id_sesion = " + menu.loadedSesion + ";"; 
+				stmt = (Statement) menu.viewCon.createStatement();
+		        rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	if(rs.getBoolean("extract_emails")) btnEmails.setEnabled(true);
+		        	else btnEmails.setEnabled(false);
+		        }
+		        
+		        //LANGUAGE	
+				query = "SELECT extract_language from crawler_sesion where id_sesion = " + menu.loadedSesion + ";"; 
+				stmt = (Statement) menu.viewCon.createStatement();
+		        rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	if(rs.getBoolean("extract_language")) btnLanguage.setEnabled(true);
+		        	else btnLanguage.setEnabled(false);
+		        }
+		        
+		        //GEOLOCATION	
+				query = "SELECT extract_geolocation from crawler_sesion where id_sesion = " + menu.loadedSesion + ";"; 
+				stmt = (Statement) menu.viewCon.createStatement();
+		        rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	if(rs.getBoolean("extract_geolocation")) btnNewButton_2.setEnabled(true);
+		        	else btnNewButton_2.setEnabled(false);
+		        }
+		        
+		        //BROKEN URL
+				query = "SELECT extract_broken from crawler_sesion where id_sesion = " + menu.loadedSesion + ";"; 
+				stmt = (Statement) menu.viewCon.createStatement();
+		        rs = stmt.executeQuery(query);
+		        while (rs.next()) {
+		        	if(rs.getBoolean("extract_broken")) btnBrokenUrl.setEnabled(true);
+		        	else btnBrokenUrl.setEnabled(false);
+		        }
+		        
+			}catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+	}
+	
+	
 	/**
 	 * @param args
 	 *            the command line arguments
@@ -1734,19 +2058,25 @@ public class mainMenu extends javax.swing.JFrame {
 		String contains = "No hay restriccion a nivel de contenido del enlace\n";
 		String excel = "";
 		if (this.isEmails)
-			ejec += "Emails.\n";
+			ejec += "Emails\n";
 		if (this.isIdioma)
-			ejec += "Idioma.\n";
+			ejec += "Idioma\n";
+		if (this.fetchGeolocation)
+			ejec += "Geolocalización\n";
 		if (this.isBroken)
-			ejec += "Enlaces ca�dos.\n";
+			ejec += "Enlaces caídos\n";
 		if (ejec.isEmpty())
-			ejec = "No se analizara nada en tiempo de ejecucion.";
+			ejec = "No se analizara nada en tiempo de ejecucion";
 		if (this.isStore)
-			excel = "Se crear� el fichero " + this.store + "_success.xlsx al finalizar la ejecuci�n\n";
+			excel = "Se creará el fichero " + this.store + "_success.xlsx al finalizar la ejecución\n";
 		if (this.isBroken)
-			excel += "Se crear� el fichero " + this.store + "_errro.xlsx al finalizar la ejecuci�n";
+			excel += "Se creará el fichero " + this.store + "_error.xlsx al finalizar la ejecución\n";
+		if (this.getIsFetchGeolocation())
+			excel += "Se creará un mapa de calor y un mapa de frecuencia al finalizar la ejecución\n";
+		if (this.dbStore)
+			excel += "Se almacenarán los resultados en la base de datos durante la ejecución\n";
 		if (!this.isContiene && !this.isRegex && !this.isNoContiene)
-			url = "Se analizaran todos los enlaces.";
+			url = "Se analizaran todos los enlaces";
 		if (this.semilla.length > 0) {
 			seeders = "\n\t-Se utilizara como semilla-\n\n";
 			for (int i = 0; i < this.semilla.length; ++i) {
@@ -1795,7 +2125,7 @@ public class mainMenu extends javax.swing.JFrame {
 		}
 
 		if ((url + contiene + noContiene + regEx).isEmpty())
-			url = "No hay restricci�n a nivel de enlace.\n";
+			url = "No hay restricción a nivel de enlace.\n";
 		jTextArea2.setText("");
 		writeConsole("Iniciando el Crawling...");
 		String s = "\n\n\n   **************************\n   * CONDICIONES DEL ENLACE *\n   **************************\n\n\n"
@@ -1803,7 +2133,9 @@ public class mainMenu extends javax.swing.JFrame {
 				+ "\n\n\n   *****************************\n   * CONDICIONES DEL CONTENIDO *\n   *****************************\n\n\n"
 				+ contains
 				+ "\n\n\n   *************************\n   * ANALIZAR EN EJECUCION *\n   *************************\n\n"
-				+ ejec + "\n\n\n\n" + excel + "\n\n" + "\n\n\n\t\t------------INICIO----------\n\n\n";
+				+ ejec
+				+ "\n\n\n   ******************\n   * ALMACENAMIENTO *\n   ******************\n\n"
+				+ excel + "\n\n" + "\n\n\n\t\t------------INICIO----------\n\n\n";
 		writeConsole(s);
 	}
 
@@ -1868,6 +2200,127 @@ public class mainMenu extends javax.swing.JFrame {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+	}
+	
+	public void populate(int _case){
+		   // The Connection is obtained
+		Statement stmt;
+		ResultSet rs;
+		try {
+			switch(_case) {
+			//TODAS LAS URLS
+		    case 1:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("select url,url_padre from url_correcta;");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(393);
+				table.getColumnModel().getColumn(1).setPreferredWidth(393);
+		        break;
+		    //URLS DE UNA DETERMINADA SESION
+		    case 2:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("select url,url_padre from url_correcta where sesion_id = " + menu.loadedSesion +";");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(393);
+				table.getColumnModel().getColumn(1).setPreferredWidth(393);
+		        break;
+		    case 3:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("SELECT url, email FROM email INNER JOIN url_correcta ON email.url_id = url_correcta.id_url_correcta;");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(500);
+				table.getColumnModel().getColumn(1).setPreferredWidth(286);
+				break;
+		    case 4:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("SELECT url, email FROM email INNER JOIN url_correcta ON email.url_id = url_correcta.id_url_correcta where url_correcta.sesion_id =" + menu.loadedSesion + ";");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(500);
+				table.getColumnModel().getColumn(1).setPreferredWidth(286);
+				break;
+		    case 5:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("SELECT url, idioma FROM url_correcta where idioma != \"null\";");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(650);
+				table.getColumnModel().getColumn(1).setPreferredWidth(136);
+				break;
+		    case 6:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("SELECT url, idioma FROM url_correcta where sesion_id = " + menu.loadedSesion + ";");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(650);
+				table.getColumnModel().getColumn(1).setPreferredWidth(136);
+				break;
+		    case 7:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("SELECT url, pais, ciudad, codigo_postal, latitud, longitud FROM url_correcta where pais != \"null\";");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(401);
+				table.getColumnModel().getColumn(1).setPreferredWidth(77);
+				table.getColumnModel().getColumn(2).setPreferredWidth(77);
+				table.getColumnModel().getColumn(3).setPreferredWidth(77);
+				table.getColumnModel().getColumn(4).setPreferredWidth(77);
+				table.getColumnModel().getColumn(5).setPreferredWidth(77);
+				break;
+		    case 8:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("SELECT url, pais, ciudad, codigo_postal, latitud, longitud FROM url_correcta where sesion_id = " + menu.loadedSesion + ";");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(401);
+				table.getColumnModel().getColumn(1).setPreferredWidth(77);
+				table.getColumnModel().getColumn(2).setPreferredWidth(77);
+				table.getColumnModel().getColumn(3).setPreferredWidth(77);
+				table.getColumnModel().getColumn(4).setPreferredWidth(77);
+				table.getColumnModel().getColumn(5).setPreferredWidth(77);
+				break;
+		    case 9:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("SELECT url_padre, url, error_code from url_erronea;");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(350);
+				table.getColumnModel().getColumn(1).setPreferredWidth(350);
+				table.getColumnModel().getColumn(2).setPreferredWidth(86);
+				break;
+		    case 10:
+				stmt = (Statement) menu.viewCon.createStatement();
+				rs = stmt.executeQuery("SELECT url_padre, url, error_code from url_erronea where sesion_id = " + menu.loadedSesion + ";");
+				table.setModel(buildTableModel(rs));
+				table.getColumnModel().getColumn(0).setPreferredWidth(350);
+				table.getColumnModel().getColumn(1).setPreferredWidth(350);
+				table.getColumnModel().getColumn(2).setPreferredWidth(86);
+				break;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static DefaultTableModel buildTableModel(ResultSet rs)
+	        throws SQLException {
+
+	    ResultSetMetaData metaData = rs.getMetaData();
+
+	    // names of columns
+	    Vector<String> columnNames = new Vector<String>();
+	    int columnCount = metaData.getColumnCount();
+	    for (int column = 1; column <= columnCount; column++) {
+	        columnNames.add(metaData.getColumnName(column));
+	    }
+
+	    // data of the table
+	    Vector<Vector<Object>> data = new Vector<Vector<Object>>();
+	    while (rs.next()) {
+	        Vector<Object> vector = new Vector<Object>();
+	        for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
+	            vector.add(rs.getObject(columnIndex));
+	        }
+	        data.add(vector);
+	    }
+
+	    return new DefaultTableModel(data, columnNames);
+
 	}
 	
 	public void updateFields()
@@ -1966,6 +2419,7 @@ public class mainMenu extends javax.swing.JFrame {
 	private JRadioButton radioButton_1;
 	private JComboBox comboBox_1;
 	private JComboBox comboBox_2;
+	private JComboBox comboBox;
 	private JRadioButton jRadioButton6;
 	private JRadioButton radioButton_2;
 	private JRadioButton radioButton_3;
@@ -1974,4 +2428,20 @@ public class mainMenu extends javax.swing.JFrame {
 	private JRadioButton rdbtnDb;
 	private JTextField txtRoot;
 	private JTextField txtyy;
+	private JTable table_1;
+	private JScrollBar scrollBar;
+	private JTable table_2;
+	private JScrollPane scrollPane;
+	private JTable table_3;
+	private JTable table;
+	private JTextField txtyy_1;
+	private JTextField txtRoot_1;
+	private JButton btnLanguage;
+	private JButton btnBrokenUrl;
+	private JButton btnNewButton;
+	private JButton btnNewButton_2;
+	private JButton btnEmails;
+	private JLabel lblDbLoadedSuccesfuly;
+	private JLabel label_2;
+	private JButton btnUrl;
 }

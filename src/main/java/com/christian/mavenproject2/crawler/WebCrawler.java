@@ -388,15 +388,10 @@ public class WebCrawler implements Runnable {
 			mainMenu menu = getMyController().menu;
 			menu.lastAction = Instant.now().toEpochMilli();
 			page.setStatusCode(statusCode);
-			if (statusCode < 200 || statusCode > 299) { // Not 2XX: 2XX status
-														// codes indicate
-														// success
+			if (statusCode < 200 || statusCode > 299) {
 				if (statusCode == HttpStatus.SC_MOVED_PERMANENTLY || statusCode == HttpStatus.SC_MOVED_TEMPORARILY
 						|| statusCode == HttpStatus.SC_MULTIPLE_CHOICES || statusCode == HttpStatus.SC_SEE_OTHER
-						|| statusCode == HttpStatus.SC_TEMPORARY_REDIRECT || statusCode == 308) { // is
-																									// 3xx
-																									// todo
-					// follow https://issues.apache.org/jira/browse/HTTPCORE-389
+						|| statusCode == HttpStatus.SC_TEMPORARY_REDIRECT || statusCode == 308) {
 					page.setRedirect(true);
 
 					String movedToUrl = fetchResult.getMovedToUrl();
@@ -445,10 +440,9 @@ public class WebCrawler implements Runnable {
 							logger.debug("Not visiting: {} as per your \"shouldVisit\" policy", webURL.getURL());
 						}
 					}
-				} else { // All other http codes other than 3xx & 200
+				} else {
 					String description = EnglishReasonPhraseCatalog.INSTANCE.getReason(fetchResult.getStatusCode(),
-							Locale.ENGLISH); // Finds
-					// the status reason for all known statuses
+							Locale.ENGLISH);
 					String contentType = fetchResult.getEntity() == null ? ""
 							: fetchResult.getEntity().getContentType() == null ? ""
 									: fetchResult.getEntity().getContentType().getValue();

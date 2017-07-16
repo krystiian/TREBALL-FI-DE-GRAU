@@ -1833,11 +1833,12 @@ public class mainMenu extends javax.swing.JFrame {
 	}
 
 	public void addSeeds(String[] s, CrawlController controller) {
+		mainMenu menu = controller.menu;
 		MyAlgorithms myAlg = new MyAlgorithms();
 		for (int i = 0; i < s.length; ++i) {
 			controller.addSeed(s[i]);
 			if (!myAlg.isValidURL(s[i]))
-				System.out.println("La URL " + s[i] + " PODR�A SER INCORRECTA.");
+				menu.writeConsole("La URL " + s[i] + " PODRÍA SER INCORRECTA.\n");
 		}
 	}
 

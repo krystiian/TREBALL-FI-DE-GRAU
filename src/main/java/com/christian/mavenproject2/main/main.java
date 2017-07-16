@@ -24,6 +24,7 @@ import com.mysql.cj.api.jdbc.Statement;
  *
  * @author chris
  */
+//main class
 public class main {
 	public static void main(String[] args) throws Exception {
 		mainMenu menu = new mainMenu();
